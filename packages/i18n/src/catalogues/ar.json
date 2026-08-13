@@ -3,8 +3,10 @@
   "common.saveLabel": "حفظ التغييرات",
   "common.errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
   "common.greeting": "مرحبًا يا {name}!",
-  "i18nCheck.langEn": "EN",
-  "i18nCheck.langAr": "AR",
+  "error.unauthenticated": "تم تسجيل خروجك. سجّل الدخول للمتابعة.",
+  "error.workspaceNotFound": "تعذّر العثور على مساحة عملك. حاول تسجيل الدخول مرة أخرى.",
+  "error.serverGeneric": "حدث خطأ من جانبنا. يرجى المحاولة مرة أخرى، وتواصل مع الدعم إذا استمرت المشكلة.",
+  "error.invalidLanguage": "هذه ليست لغة مدعومة. اختر الإنجليزية أو العربية.",
   "shell.skipToContent": "تخطَّ إلى المحتوى",
   "shell.nav.screens": "الشاشات",
   "shell.nav.media": "الوسائط",
@@ -17,6 +19,7 @@
   "shell.nav.close": "إغلاق",
   "shell.language.labelEn": "English",
   "shell.language.labelAr": "العربية",
+  "shell.language.saveFailed": "تعذّر حفظ تفضيل اللغة. تمت العودة إلى آخر اختيار محفوظ.",
   "shell.theme.light": "فاتح",
   "shell.theme.dark": "داكن"
 }

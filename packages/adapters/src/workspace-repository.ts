@@ -1,5 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { generateId, type Workspace, type WorkspaceBootstrapResult, type WorkspaceRepository } from '@lawha/domain';
+import {
+  generateId,
+  type Locale,
+  type Workspace,
+  type WorkspaceBootstrapResult,
+  type WorkspaceRepository,
+} from '@lawha/domain';
 
 // AD-27: service-role credentials are confined to this adapter layer —
 // never construct a service-role client anywhere else. Callers pass the
@@ -35,11 +41,43 @@ class SupabaseWorkspaceRepository implements WorkspaceRepository {
 
     const workspace = await this.client
       .from('workspace')
-      .select('id, created_at, updated_at')
+      .select('id, language, created_at, updated_at')
       .eq('id', membership.data.workspace_id)
       .single();
 
     if (workspace.error) throw new Error(`findWorkspaceForClerkUser failed: ${workspace.error.message}`);
+
+    return toWorkspace(workspace.data as WorkspaceRow);
+  }
+
+  // AD-27: workspaceId is a required argument, supplied by the caller from
+  // the session (resolveWorkspaceContext(), never a route param) — Task 3's
+  // demonstration of the workspace-scoped data-access pattern.
+  async findWorkspaceById(workspaceId: string): Promise<Workspace | null> {
+    const workspace = await this.client
+      .from('workspace')
+      .select('id, language, created_at, updated_at')
+      .eq('id', workspaceId)
+      .maybeSingle();
+
+    if (workspace.error) throw new Error(`findWorkspaceById failed: ${workspace.error.message}`);
+    if (!workspace.data) return null;
+
+    return toWorkspace(workspace.data as WorkspaceRow);
+  }
+
+  // Story 1.7: the write side of persisted language preference (AC1).
+  // Mirrors findWorkspaceById's shape — a plain update scoped by id, no RLS
+  // policy needed since all writes are already service-role-mediated.
+  async updateWorkspaceLanguage(workspaceId: string, language: Locale): Promise<Workspace> {
+    const workspace = await this.client
+      .from('workspace')
+      .update({ language })
+      .eq('id', workspaceId)
+      .select('id, language, created_at, updated_at')
+      .single();
+
+    if (workspace.error) throw new Error(`updateWorkspaceLanguage failed: ${workspace.error.message}`);
 
     return toWorkspace(workspace.data as WorkspaceRow);
   }
@@ -67,6 +105,7 @@ class SupabaseWorkspaceRepository implements WorkspaceRepository {
     return {
       workspace: {
         id: row.workspace_id,
+        language: row.workspace_language,
         createdAt: new Date(row.workspace_created_at),
         updatedAt: new Date(row.workspace_updated_at),
       },
@@ -84,12 +123,14 @@ class SupabaseWorkspaceRepository implements WorkspaceRepository {
 
 interface WorkspaceRow {
   id: string;
+  language: Locale;
   created_at: string;
   updated_at: string;
 }
 
 interface CreateWorkspaceRpcRow {
   workspace_id: string;
+  workspace_language: Locale;
   workspace_created_at: string;
   workspace_updated_at: string;
   branch_id: string;
@@ -101,5 +142,5 @@ interface CreateWorkspaceRpcRow {
 }
 
 function toWorkspace(row: WorkspaceRow): Workspace {
-  return { id: row.id, createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at) };
+  return { id: row.id, language: row.language, createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at) };
 }

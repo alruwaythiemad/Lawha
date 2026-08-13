@@ -27,9 +27,12 @@ import { StatusAnnouncer } from './status-announcer';
 // added in later stories.
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth.protect();
-  await ensureWorkspaceForClerkUser(userId);
+  const workspace = await ensureWorkspaceForClerkUser(userId);
 
-  const [locale, theme] = await Promise.all([resolveLocale(), resolveTheme()]);
+  // Story 1.7 AC1: pass the signed-in owner's persisted preference in —
+  // resolveLocale() prefers it over any Accept-Language guess whenever the
+  // locale cookie is absent (a new device, cleared cookies).
+  const [locale, theme] = await Promise.all([resolveLocale(workspace.language), resolveTheme()]);
 
   return (
     <>

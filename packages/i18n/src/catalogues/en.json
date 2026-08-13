@@ -3,8 +3,10 @@
   "common.saveLabel": "Save changes",
   "common.errorGeneric": "Something went wrong. Please try again.",
   "common.greeting": "Hello, {name}!",
-  "i18nCheck.langEn": "EN",
-  "i18nCheck.langAr": "AR",
+  "error.unauthenticated": "You're signed out. Sign in to continue.",
+  "error.workspaceNotFound": "We couldn't find your workspace. Try signing in again.",
+  "error.serverGeneric": "Something went wrong on our end. Please try again, and contact support if it keeps happening.",
+  "error.invalidLanguage": "That's not a supported language. Choose English or Arabic.",
   "shell.skipToContent": "Skip to content",
   "shell.nav.screens": "Screens",
   "shell.nav.media": "Media",
@@ -17,6 +19,7 @@
   "shell.nav.close": "Close",
   "shell.language.labelEn": "English",
   "shell.language.labelAr": "العربية",
+  "shell.language.saveFailed": "Couldn't save your language preference. Reverted to your last saved choice.",
   "shell.theme.light": "Light",
   "shell.theme.dark": "Dark"
 }

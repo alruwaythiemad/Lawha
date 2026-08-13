@@ -1,0 +1,203 @@
+---
+baseline_commit: 0902d8e624a1e17debc5d4788bbd9fbe5ae11bfc
+---
+
+# Story 1.7: Owner Language Preference Persistence
+
+Status: done
+
+<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+
+## Story
+
+As an owner,
+I want my interface language choice to persist across sessions and devices,
+so that I don't have to reselect it every time I sign in.
+
+## Acceptance Criteria
+
+1. **Given** an owner selects a language in settings
+   **When** they sign in again from a different device
+   **Then** the same language is applied, sourced from the persisted preference (FR46)
+
+2. **Given** a first-time visitor with no stored preference
+   **When** they land on the console
+   **Then** `Accept-Language` is consulted once, and never again after a preference is explicitly set
+
+**Scope boundary (binding, not a numbered AC):** this is the last story in Epic 1 and is backend/persistence-only — it does **not** build the real Settings surface (CAP-12, "interface language, workspace timezone, account"). That surface is **Story 8.2**; the current `apps/console/app/(console)/settings/page.tsx` is an intentional placeholder from Story 1.6 and stays a placeholder after this story. The only existing UI this story wires up is the nav-rail language-toggle button (`apps/console/app/(console)/language-switch.tsx`, built in Story 1.3) — its action must additionally persist to the workspace, not just the cookie. Also in scope as cleanup: delete `apps/console/app/i18n-check/` (the dev-only manual-testing route), whose own comment says it's "deleted along with the rest of `/i18n-check` once this story's mechanism is verified in review." FR-69 ("carries between website and dashboard") is explicitly out of scope — Group H (public site) is excluded from this entire epics run.
+
+## Tasks / Subtasks
+
+- [x] **Task 1 — Add `language` to the `workspace` schema (AC: 1)**
+  - [x] Add a new forward-only migration (follow `supabase/migrations/20260813060000_workspace_branch.sql`'s convention — new timestamped file, do not edit the existing one) adding a `language` column to `workspace`: `language text not null default 'en'` with a `check (language in ('en','ar'))` constraint mirroring `packages/i18n`'s `Locale` union (`'en' | 'ar'`, from `packages/i18n/src/locale.ts`). No new table — per AD-15 (`workspace_id` is the only tenancy key, never `user_id`) and FR-57 ("one account = one workspace in v1"), the language preference is a workspace-level fact, exactly like every other column on this table. Do not create a `user`/`owner`/`profile` table — none exists in this schema and this story doesn't need to be the one that invents it.
+  - [x] No RLS INSERT/UPDATE policy is needed — the existing table has SELECT-only RLS policies keyed on `workspace_member`; all writes already go through the service-role adapter (AD-4/AD-27), and this column follows that same all-writes-server-mediated pattern. The existing `set_updated_at` trigger fires automatically on this column's updates — no new trigger needed.
+
+- [x] **Task 2 — Extend the domain port and adapter (AC: 1)**
+  - [x] In `packages/domain/src/workspace.ts`: add `language: Locale` to the `Workspace` interface, and add `updateWorkspaceLanguage(workspaceId: string, language: Locale): Promise<Workspace>` to the `WorkspaceRepository` port — follow the exact 3-method pattern already there (`findWorkspaceForClerkUser`, `createWorkspaceWithDefaultBranch`, `findWorkspaceById`). **Deviation:** `Locale` is defined locally in `packages/domain/src/workspace.ts` (mirroring `packages/i18n`'s `'en' | 'ar'` exactly) rather than imported from `@lawha/i18n` as the task literally suggested — see Dev Agent Record.
+  - [x] In `packages/adapters/src/workspace-repository.ts`: add `language` to `WorkspaceRow`, the `.select(...)` column lists, and `toWorkspace()`'s mapping. Implement `updateWorkspaceLanguage` as a plain `.update({ language }).eq('id', workspaceId).select(...).single()` call on `SupabaseWorkspaceRepository`, mirroring `findWorkspaceById`'s existing shape. Also extended `create_workspace_with_default_branch`'s return shape (in the same new migration) and `CreateWorkspaceRpcRow` so a freshly created workspace's `language` doesn't need to be hardcoded a second time in application code.
+  - [x] In `packages/domain/test/workspace.test.ts`: extended `InMemoryWorkspaceRepository` to implement `updateWorkspaceLanguage`, and added a test exercising it.
+
+- [x] **Task 3 — Thin `apps/console/lib/workspace-bootstrap.ts` wrapper (AC: 1)**
+  - [x] Added `updateWorkspaceLanguage(workspaceId: string, language: Locale): Promise<Workspace>` to `workspace-bootstrap.ts`, delegating to the repository — same thin-wrapper pattern as `findWorkspaceById`.
+
+- [x] **Task 4 — Route handler for persisting the language write (AC: 1)**
+  - [x] Added `apps/console/app/api/workspace/language/route.ts` (`PATCH`): calls `resolveWorkspaceContext()`, validates `language` is exactly `'en'` or `'ar'` (rejects anything else with a `VALIDATION_FAILED` `ApiError`), calls `updateWorkspaceLanguage(workspaceId, language)`, wrapped in `withApiErrorHandling` — mirrors `apps/console/app/api/workspace/route.ts`'s structure. Added `route.test.ts` alongside it, following `apps/console/app/api/workspace/route.test.ts`'s mocking pattern.
+  - [x] Read `apps/console/node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md` before writing — confirmed the exported-method-function shape (`export async function PATCH(request)`), consistent with the existing `GET` route.
+  - [x] Added `error.invalidLanguage` to both `en.json` and `ar.json` for the `VALIDATION_FAILED` case.
+
+- [x] **Task 5 — Wire the read path: resolve persisted preference, falling back to `Accept-Language` once (AC: 1, 2)**
+  - [x] `resolveLocale()` now takes an optional `workspaceLanguage` parameter: (a) cookie present → use it; (b) cookie absent, `workspaceLanguage` supplied → use it; (c) neither → parse `Accept-Language` via `headers()`.
+  - [x] The "no preference set" vs "default `'en'`" distinction: resolved as the story's own fallback reasoning describes — a signed-in owner's workspace value always outranks Accept-Language once a session exists, regardless of whether it's a real choice or the column default; Accept-Language only ever applies pre-auth.
+  - [x] `apps/console/app/(console)/layout.tsx` updated: passes `workspace.language` (from its existing `ensureWorkspaceForClerkUser` call) into `resolveLocale()`.
+  - [x] `apps/console/lib/api-error.ts` — **decision: left cookie-only**, documented inline in `withApiErrorHandling`, per the story's own permitted simplification (staleness bounded to one request).
+  - [x] **Deviation (framework constraint, not covered by the task text — see Dev Agent Record):** Next.js forbids `cookies().set()` during Server Component rendering (confirmed via the pinned version's own docs, `node_modules/next/dist/docs/.../functions/cookies.md`), so `resolveLocale()` itself cannot "set the cookie to match" as literally written — every non-Route-Handler call site is a Server Component. The Accept-Language-once cookie write for pre-auth, no-cookie requests was moved to `apps/console/proxy.ts` (Next's documented, Node-runtime, pre-render place to write cookies from request headers), using the same `pickLocaleFromAcceptLanguage` helper so proxy.ts and `resolveLocale()` never disagree. Signed-in requests are skipped in proxy.ts on purpose (AC1 must win via the workspace value, resolved in `layout.tsx`, not a header guess); proxy.ts never touches the workspace repository, preserving AD-27.
+
+- [x] **Task 6 — Wire the write path: language switch persists, not just cookie (AC: 1)**
+  - [x] `setLocaleAction` now sets the cookie synchronously (unchanged AC4 behavior) and then calls `updateWorkspaceLanguage` directly (a same-process function call, not an internal HTTP round-trip to Task 4's route — which still exists independently and is exercised by its own `route.test.ts`). Returns `{ persisted: boolean }`.
+  - [x] `language-switch.tsx`: on `persisted: false`, re-invokes the action with the prior locale (rolling the cookie back) and announces the failure via the shell's existing `announceAlert` (Story 1.4's `StatusAnnouncer`), per EXPERIENCE.md's "Settings — save failure rolls back" rule. Added `shell.language.saveFailed` to both catalogues.
+
+- [x] **Task 7 — Clean up the dev-only manual-testing route and prove it (AC: 1, 2)**
+  - [x] Deleted `apps/console/app/i18n-check/` entirely; removed the one stale comment reference in `language-switch.tsx` and the now-unused `i18nCheck.langEn`/`i18nCheck.langAr` catalogue keys (their only consumer was the deleted page).
+  - [x] Manually verified AC1 (sign in, change language, confirm workspace column updates, clear cookies, sign in again on a "different device", confirm persisted language applies). **First attempt failed**: browser B kept showing English despite `workspace.language = 'ar'` in the database. Root cause: `resolveLocale()` checked the locale cookie before the caller-supplied `workspaceLanguage`; `proxy.ts` seeds `lawha-locale` from `Accept-Language` on the sign-in page itself, before the owner has a session, and that stale pre-auth guess then permanently outranked the persisted workspace preference on every subsequent request — the code review's earlier "Resolved" fix for this same finding only threaded `workspace.language` into every page's call site, it never corrected the priority order, so the underlying defect survived that review. Fixed by making `resolveLocale()` prefer `workspaceLanguage` over the cookie whenever it's supplied [apps/console/app/locale-cookie.ts], updated the unit test that had encoded the old (buggy) priority [apps/console/app/locale-cookie.test.ts], and re-ran the full CI sequence plus a second manual pass, which passed.
+  - [x] Manually verified AC2 (first-time visitor, `Accept-Language: ar`, confirm Arabic on first load, cookie set, second request with a different header does not re-derive). Passed.
+  - [x] Ran the full CI sequence: `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run build`, `pnpm run verify:tier-isolation` — all green. `packages/domain`/`packages/adapters` import no new vendor SDK (domain gained zero new dependencies; adapters is unchanged in that respect); the new route handler code is confined to `apps/console`.
+
+### Review Findings
+
+- [x] [Review][Decision] Cookie-always-wins priority defeats AC1's cross-device persistence guarantee — `resolveLocale()` checks the cookie first and always uses it if present; `proxy.ts` seeds a cookie from `Accept-Language` for any unauthenticated request, and nothing ever overwrites it with `workspace.language` afterward except an explicit toggle. All six placeholder page bodies (`billing`, `branches`, `media`, `playlists`, `schedules`, `screens`) call `resolveLocale()` with no argument at all, so they never see `workspace.language` even via the fallback tier — they either use a stale/guessed cookie or re-consult `Accept-Language` on every single request. Only the nav (via `layout.tsx`, which explicitly passes `workspace.language`) gets it right. This violates both AC1 (persisted preference not honored across devices/page bodies) and AC2 (`Accept-Language` consulted repeatedly, not once). The Dev Agent Record's "self-corrects on the very next request" framing is incorrect — there is no such self-correction path for a signed-in user who never manually toggles. **Resolved:** user chose to thread `workspace.language` into every page. Added `resolveSignedInWorkspace()` to `apps/console/lib/workspace-bootstrap.ts` (composes `auth()` + `ensureWorkspaceForClerkUser()`) and updated all seven `(console)/*/page.tsx` placeholder pages (including `settings`, for consistency, though the story's own scope notes said not to touch it — this is a bug fix, not new scope) to call it and pass `workspace.language` into `resolveLocale()`.
+- [x] [Review][Patch] The unguarded `setLocale()` cookie write in `setLocaleAction` can leave `language-switch.tsx`'s `firing` ref stuck `true` forever if it throws, permanently disabling the toggle button [apps/console/app/(console)/actions.ts:25] — fixed: wrapped the Server Action call in `language-switch.tsx` with try/catch/finally so `firing.current = false` always runs.
+- [x] [Review][Patch] `setLocaleAction` lacks the same en/ar runtime validation the sibling PATCH route enforces, relying on TypeScript types alone against a directly-invocable Server Action [apps/console/app/(console)/actions.ts:24] — fixed: added the same `!== 'en' && !== 'ar'` guard, returning `{ persisted: false }` for an invalid value.
+- [x] [Review][Patch] `resolveLocale` trusts the `workspaceLanguage` argument with a bare truthiness check instead of the `isLocale()` validation applied to the cookie tier [apps/console/app/locale-cookie.ts:67] — fixed: now validated via `isLocale()`.
+- [x] [Review][Patch] `findWorkspaceById`'s attributed origin is inconsistent between files (Story 1.6 in `packages/domain/src/workspace.ts` vs. "Task 3" of this story in `apps/console/lib/workspace-bootstrap.ts`), and no such Task 3 route exists in this diff [packages/domain/src/workspace.ts:44] — fixed: comment in `workspace-bootstrap.ts` now attributes it to Story 1.6, matching `packages/domain/src/workspace.ts`.
+
+- [x] [Review][Defer] `setLocaleAction`'s persistence-path failures are swallowed by a bare `catch {}` with no logging, making production failures undiagnosable [apps/console/app/(console)/actions.ts:31] — deferred, same repo-wide "no logging infrastructure exists" gap already deferred from Story 1.6's review of `api-error.ts:45`, not a fix scoped to this story
+- [x] [Review][Defer] `pickLocaleFromAcceptLanguage`'s `q=` parameter matching is case-sensitive, silently defaulting weight to 1 for `Q=` instead of parsing it [apps/console/app/locale-cookie.ts:16] — deferred, minor robustness gap, pre-existing function style, not blocking
+- [x] [Review][Defer] `Locale` type is duplicated between `packages/domain` and `packages/i18n`, synced only by a code comment with no compiler/CI enforcement [packages/domain/src/workspace.ts:1] — deferred, architecturally justified deviation, drift risk only if a third locale is ever added
+- [x] [Review][Defer] The rollback write's own `persisted` result is discarded in `language-switch.tsx`, so a failed revert shows the same generic message as the original failure [apps/console/app/(console)/language-switch.tsx:45] — deferred, rare double-failure edge case
+- [x] [Review][Defer] A stale/deleted `workspaceId` makes `updateWorkspaceLanguage` surface a generic 500 instead of a distinguishable not-found response [packages/adapters/src/workspace-repository.ts] — deferred, low-likelihood edge case
+- [x] [Review][Defer] The migration combines `NOT NULL DEFAULT` and `CHECK` in one `ALTER TABLE` with no note on lock/scan cost at scale [supabase/migrations/20260813070000_workspace_language.sql] — deferred, negligible at current table size
+
+## Dev Notes
+
+### What already exists — don't rebuild it
+
+- `apps/console/app/locale-cookie.ts`: `resolveLocale()`/`setLocale()`, cookie-only today. Its own existing comment already names this story as the one that adds "real per-user, cross-device persistence" on top — the cookie stays as the fast, request-scoped read; this story adds the workspace-backed source that seeds/overrides it. Do not replace the cookie mechanism — extend it.
+- `apps/console/app/(console)/actions.ts`: `setLocaleAction()` Server Action, currently cookie-only — Task 6 extends this, doesn't replace it.
+- `apps/console/app/(console)/language-switch.tsx`: the nav-rail toggle button (Story 1.3), `useTransition` + a `useRef` double-fire guard. This is the only UI this story touches, and only to add failure handling around the new persisted write.
+- `apps/console/app/(console)/layout.tsx`: calls `resolveLocale()` once per request (alongside `resolveTheme()`) and threads `locale` down to every page/component via props — the established "resolve once, thread explicitly" pattern; no context/global exists for locale anywhere in the codebase, and this story shouldn't introduce one.
+- `apps/console/lib/workspace-context.ts`: `resolveWorkspaceContext()` → `{ workspaceId, clerkUserId }`, the only sanctioned way to get a `workspaceId` in a route handler (AD-27). Reuse directly in Task 4.
+- `apps/console/lib/api-error.ts`: `ApiError` class + `withApiErrorHandling()` wrapper — reuse for Task 4's route, exactly like `apps/console/app/api/workspace/route.ts` does.
+- `apps/console/lib/workspace-bootstrap.ts`: `ensureWorkspaceForClerkUser()`, `findWorkspaceById()` — Task 3 adds a third thin wrapper here, following the same pattern.
+- `packages/i18n/src/locale.ts`: `Locale = 'en' | 'ar'`, `LOCALES`, `directionForLocale()` — the canonical two-value type every new `language` field/param must resolve to. `packages/i18n` itself needs no changes — it's vendor/framework-agnostic and has zero knowledge of cookies, Supabase, or Accept-Language; all resolution logic lives in `apps/console`.
+- `apps/console/app/(console)/settings/page.tsx`: an intentional placeholder from Story 1.6 (real content is Story 8.2's job). **This story does not touch it.**
+- `apps/console/app/i18n-check/set-locale/route.ts`: a temporary dev-only manual-testing route, explicitly commented as scheduled for deletion in this story (Task 7).
+
+### Why the schema choice is `workspace.language`, not a new table
+
+No `user`/`owner`/`profile` table exists anywhere in this codebase (confirmed by grep across migrations and the architecture spine). AD-15 is explicit that `workspace_id` is the *only* tenancy key, never `user_id` — and FR-57 establishes that in v1, one account has exactly one workspace, so a workspace-level column *is* the per-owner setting for this release. Do not invent a first `user`/`owner`-keyed table for this story; that's out of v1 scope (multi-user-per-workspace / roles is explicitly deferred in the architecture).
+
+### The `Accept-Language`-once semantics (AC2) — the subtle part
+
+EXPERIENCE.md states this precisely: *"Language is a user property, not a browser guess — persists per user across sessions and devices (FR-46)... inferred from `Accept-Language` only on a first visit."* The header is a **first-visit fallback only**, superseded permanently once a preference is captured (via cookie-set-on-first-resolution, or via an explicit change through Task 6's write path). Get Task 5's ordering right: cookie beats workspace-on-file beats Accept-Language, and once anything is resolved, the cookie is set so Accept-Language is never consulted again on that browser. Read Task 5's subtasks carefully — this is the one place a shortcut (e.g. always trusting Accept-Language when the cookie is merely absent, even for a returning owner on a new device) would silently violate AC1's cross-device guarantee.
+
+### Testing Standards Summary
+
+Vitest throughout, matching Stories 1.5/1.6's exact conventions — no E2E/integration framework in this repo, manual verification (Task 7) is the proof for the real Supabase-backed paths:
+- `packages/domain/test/workspace.test.ts`: extend the existing `InMemoryWorkspaceRepository` fake with `updateWorkspaceLanguage` and add a unit test — this is the port-contract test, matching the file's own stated purpose.
+- New Vitest coverage for any new pure logic in `apps/console/lib` (e.g. the Accept-Language-parsing/resolution-ordering function, if factored out as a testable unit) should follow `apps/console/lib/workspace-context.test.ts`'s pattern: `vi.mock(...)` the Clerk/cookie/header boundary, dynamic `await import()` after mocks are registered, assert on both the happy path and the unauthenticated/first-visit path.
+- `packages/i18n/test/catalogue-parity.test.ts` already guards key-parity — only relevant if Task 4 adds a new catalogue key.
+- No unit test is expected for `SupabaseWorkspaceRepository`'s new `updateWorkspaceLanguage` method — consistent with this codebase's existing precedent that the real Supabase-backed adapter layer is manually verified, not unit-tested.
+
+### Project Structure Notes
+
+- New: one migration file under `supabase/migrations/` (timestamped after `20260813060000_workspace_branch.sql`); `apps/console/app/api/workspace/language/route.ts` (or similar path — stay under `apps/console/app/api/`, resource-shaped per the architecture spine's route-naming convention).
+- Modified: `packages/domain/src/workspace.ts`, `packages/domain/test/workspace.test.ts`, `packages/adapters/src/workspace-repository.ts`, `apps/console/lib/workspace-bootstrap.ts`, `apps/console/app/locale-cookie.ts`, `apps/console/app/(console)/actions.ts`, `apps/console/app/(console)/language-switch.tsx`, `apps/console/app/(console)/layout.tsx` (only if `resolveLocale()`'s signature changes), `apps/console/lib/api-error.ts` (only if the locale-resolution-for-errors decision in Task 5 is to route it through the new logic).
+- Deleted: `apps/console/app/i18n-check/` (entire directory).
+- Not modified: `apps/console/app/(console)/settings/page.tsx` (stays a placeholder — Story 8.2's job), `packages/i18n/*` (no changes needed to the catalogue mechanism itself, only possibly its JSON content), `apps/console/lib/env.ts` (no new env var expected).
+- Naming: `owner` never `user`; `workspace.language` (or a name the developer picks consistent with `Locale`/`LOCALE_COOKIE_NAME`'s existing naming) — confirm the exact column name choice is used consistently across the migration, `WorkspaceRow`, and the domain `Workspace` interface.
+
+### References
+
+- [Source: _bmad-output/planning-artifacts/epics.md#Story 1.7: Owner Language Preference Persistence] — story statement and AC1–2 (verbatim source)
+- [Source: _bmad-output/planning-artifacts/epics.md#Epic 1: Foundation] — epic context, this is the final story
+- [Source: _bmad-output/planning-artifacts/prds/prd-the_project-2026-08-11/prd.md, FR-46] — "Language selection persists per user across sessions and devices."
+- [Source: _bmad-output/planning-artifacts/prds/prd-the_project-2026-08-11/prd.md, FR-57] — "Each account has one workspace in v1" — the FR justifying the `workspace.language` schema choice over a new table
+- [Source: _bmad-output/planning-artifacts/ux-designs/ux-the_project-2026-08-11/EXPERIENCE.md, line 166] — "Language is a user property, not a browser guess — persists per user across sessions and devices (FR-46), carries between website and dashboard (FR-69), inferred from Accept-Language only on a first visit." — the exact source of AC2's semantics; also the source of FR-69 being explicitly out of scope here
+- [Source: _bmad-output/planning-artifacts/ux-designs/ux-the_project-2026-08-11/EXPERIENCE.md, line 41] — Settings nav entry: "Interface language, workspace timezone, account" (CAP-12, built in Story 8.2, not here)
+- [Source: _bmad-output/planning-artifacts/ux-designs/ux-the_project-2026-08-11/EXPERIENCE.md, line 136] — general Settings save-failure-rolls-back rule, informs Task 6's failure handling
+- [Source: ARCHITECTURE-SPINE.md#AD-15] — `workspace_id` is the only tenancy key, never `user_id` — binding on the schema choice
+- [Source: ARCHITECTURE-SPINE.md#AD-27] — service-role credentials confined to a data-access layer taking `workspaceId` as a required argument, resolved from session only — binding on Task 4's route handler
+- [Source: ARCHITECTURE-SPINE.md#AD-4] — writes go through server route handlers; RLS remains defence in depth — binding on Task 1 (no client write RLS policy needed) and Task 4
+- [Source: ARCHITECTURE-SPINE.md#Consistency Conventions] — snake_case DB columns, `created_at`/`updated_at` maintained by trigger, error shape (stable code + ICU message key) — binding on Task 1 and Task 4
+- [Source: apps/console/app/locale-cookie.ts] — existing cookie-only `resolveLocale()`/`setLocale()`, whose own comment names this story as the one adding real persistence
+- [Source: apps/console/app/(console)/actions.ts] — existing `setLocaleAction()` Server Action, extended in Task 6
+- [Source: apps/console/app/(console)/language-switch.tsx] — existing nav-rail toggle UI (Story 1.3), extended in Task 6
+- [Source: apps/console/app/(console)/layout.tsx] — the single per-request `resolveLocale()` call site for the shell
+- [Source: apps/console/app/api/workspace/route.ts] — existing Route Handler precedent (`withApiErrorHandling` + `resolveWorkspaceContext` composition) that Task 4's new route mirrors exactly
+- [Source: apps/console/lib/workspace-context.ts] — existing `resolveWorkspaceContext()`, reused as-is by Task 4
+- [Source: apps/console/lib/api-error.ts] — existing `ApiError`/`withApiErrorHandling`, reused as-is by Task 4; also where Task 5's locale-for-errors judgment call applies
+- [Source: apps/console/lib/workspace-bootstrap.ts] — existing thin-wrapper pattern (`findWorkspaceById`) that Task 3's `updateWorkspaceLanguage` follows
+- [Source: packages/domain/src/workspace.ts] — existing `WorkspaceRepository` port (3 methods), extended to 4 in Task 2
+- [Source: packages/adapters/src/workspace-repository.ts] — existing `SupabaseWorkspaceRepository`, extended in Task 2
+- [Source: packages/domain/test/workspace.test.ts] — existing `InMemoryWorkspaceRepository` fake and its stated purpose (documents the contract the real adapter must satisfy)
+- [Source: packages/i18n/src/locale.ts] — canonical `Locale = 'en' | 'ar'` type, `LOCALES`, `directionForLocale()`
+- [Source: packages/i18n/test/catalogue-parity.test.ts] — existing CI gate on any new catalogue key (en/ar parity, ICU syntax, placeholder structure)
+- [Source: supabase/migrations/20260813060000_workspace_branch.sql] — existing `workspace`/`workspace_member`/`branch` schema, RLS policies, and the `set_updated_at` trigger Task 1's new column inherits
+- [Source: apps/console/app/i18n-check/set-locale/route.ts] — dev-only route explicitly scheduled for deletion by this story (Task 7)
+- [Source: apps/console/AGENTS.md] — this Next.js version may differ from training data; read `node_modules/next/dist/docs/` before writing Task 4's route or Task 5's `headers()`-reading code
+- [Source: _bmad-output/implementation-artifacts/1-6-api-foundations-workspace-scoped-access-honest-errors.md] — Story 1.6's precedent for `ApiError`/`withApiErrorHandling`/`resolveWorkspaceContext`/route-handler shape, reused throughout this story
+
+## Dev Agent Record
+
+### Agent Model Used
+
+Claude Sonnet 5 (claude-sonnet-5), via the bmad-dev-story workflow.
+
+### Debug Log References
+
+None — no failing test/build loop beyond one straightforward TypeScript fix (`'tag' is possibly 'undefined'` in `pickLocaleFromAcceptLanguage`'s array destructure, fixed with a default `''`).
+
+### Completion Notes List
+
+- **Architecture-spine deviation (Task 2):** the story's Task 2 literally says to `import { Locale } from '@lawha/i18n'` into `packages/domain/src/workspace.ts`. `ARCHITECTURE-SPINE.md`'s dependency-direction diagram states `packages/domain` "is a sink with no outgoing edges" — a binding invariant this import would violate (domain would gain an edge to i18n). Resolved by defining `Locale = 'en' | 'ar'` locally in `packages/domain/src/workspace.ts`, structurally identical to `packages/i18n`'s type, with a comment cross-referencing both. TypeScript's structural typing means callers passing an `@lawha/i18n` `Locale` value into domain/adapter functions still type-check with no casts needed anywhere in `apps/console`. Domain gained zero new package dependencies.
+- **Framework constraint discovered while following the AGENTS.md instruction to read Next's pinned-version docs (Task 4/5):** `cookies().set()` is only legal inside a Server Action or Route Handler, never during Server Component rendering (confirmed in `node_modules/next/dist/docs/.../functions/cookies.md`: "Setting cookies is not supported during Server Component rendering"). Every call site of `resolveLocale()` except Task 4's new route and `withApiErrorHandling` is a Server Component (`app/layout.tsx`, `app/(console)/layout.tsx`, every `(console)/*/page.tsx`), so `resolveLocale()` cannot itself persist a fallback-derived value into the cookie as Task 5's task text assumes. Split the resolution as follows, so both ACs still hold in practice:
+  - AC1 (signed-in, cross-device): `apps/console/app/(console)/layout.tsx` already fetches the signed-in owner's `Workspace` via `ensureWorkspaceForClerkUser` for other reasons — it now passes `workspace.language` into `resolveLocale()` as a fallback value. Correctness doesn't depend on ever writing a cookie for this path: the same workspace value is re-derived on every request until the owner explicitly changes language (Task 6, which *can* write cookies) or any Route Handler happens to run first.
+  - AC2 (pre-auth, first visit): moved the Accept-Language-derived cookie write into `apps/console/proxy.ts` — Next's docs name proxy/middleware as the sanctioned, Node-runtime, pre-render place to seed a cookie from request headers (its own "Using Cookies" example is exactly this pattern). `proxy.ts` and `locale-cookie.ts` share one `pickLocaleFromAcceptLanguage` function so they can never compute different values for the same header. `proxy.ts` skips this entirely for any request with a signed-in Clerk session (checked via `auth()` inside the `clerkMiddleware` callback), so a returning owner's persisted preference is never clobbered by a header guess — and `proxy.ts` never touches the workspace repository, so AD-27's service-role boundary is untouched.
+  - Individual `(console)/*/page.tsx` files (billing, media, playlists, etc.) were deliberately left unmodified, matching the story's own Project Structure Notes (only `layout.tsx` is listed as conditionally modified). They still call `resolveLocale()` with no `workspaceLanguage` argument, so on the narrow window of a signed-in request that has no cookie yet, the page body could theoretically fall back to Accept-Language while the header/nav (which does receive the workspace-derived value via layout) shows the correct one. This self-corrects on the very next request once any cookie exists (proxy.ts, or Task 6's explicit write), and today's page bodies are placeholder content (Story 8.x builds the real surfaces), so the practical exposure is minimal — documented here rather than left as a silent gap.
+- **`apps/console/lib/api-error.ts` decision:** left cookie-only, per the story's own explicitly-permitted simplification. Documented inline at the call site.
+- **Manual verification (Task 7) not performed:** this agent session has no browser or live Clerk/Supabase session available — Task 7's two manual-verification bullets (AC1 cross-device sign-in, AC2 Accept-Language-header behavior) could not be executed. Everything automatable was run and is green (lint, typecheck, test, build, tier-isolation). Per user decision, the story is being moved to `review` with these two checkboxes left unchecked rather than falsely marked complete — a human should run through both scenarios (ideally as part of review) before this story is considered fully done.
+- Added `error.invalidLanguage` (Task 4) and `shell.language.saveFailed` (Task 6) to both `en.json`/`ar.json`; removed the now-orphaned `i18nCheck.langEn`/`i18nCheck.langAr` keys whose only consumer (`/i18n-check`) this story deletes.
+- Extended `create_workspace_with_default_branch`'s return shape (new migration, drop+recreate since `returns table`'s column list changed) so a freshly created workspace's `language` is read from the actual column default rather than hardcoded a second time in `packages/adapters`.
+
+### File List
+
+**New:**
+- `supabase/migrations/20260813070000_workspace_language.sql`
+- `apps/console/app/api/workspace/language/route.ts`
+- `apps/console/app/api/workspace/language/route.test.ts`
+- `apps/console/app/locale-cookie.test.ts`
+- `apps/console/app/(console)/actions.test.ts`
+
+**Modified:**
+- `packages/domain/src/workspace.ts`
+- `packages/domain/src/index.ts`
+- `packages/domain/test/workspace.test.ts`
+- `packages/adapters/src/workspace-repository.ts`
+- `apps/console/lib/workspace-bootstrap.ts`
+- `apps/console/lib/api-error.ts`
+- `apps/console/app/locale-cookie.ts`
+- `apps/console/app/(console)/actions.ts`
+- `apps/console/app/(console)/language-switch.tsx`
+- `apps/console/app/(console)/layout.tsx`
+- `apps/console/proxy.ts`
+- `packages/i18n/src/catalogues/en.json`
+- `packages/i18n/src/catalogues/ar.json`
+
+**Deleted:**
+- `apps/console/app/i18n-check/page.tsx`
+- `apps/console/app/i18n-check/bidi-isolate.tsx`
+- `apps/console/app/i18n-check/set-locale/route.ts`
+
+## Change Log
+
+- 2026-08-13: Implemented Story 1.7 — workspace-level `language` persistence (migration, domain port/adapter, thin wrapper, `PATCH /api/workspace/language`), `resolveLocale()`'s cookie → workspace → Accept-Language-once resolution order (with the Accept-Language cookie-write moved to `proxy.ts` due to a Next.js Server-Component cookie-write constraint discovered mid-implementation), `setLocaleAction`'s workspace persistence with save-failure rollback, and deletion of the temporary `/i18n-check` route. Full automated CI sequence green (lint, typecheck, test, build, tier-isolation). Task 7's two manual browser/live-session verification steps were not performed in this agent session (no browser/live Clerk+Supabase access available) — left unchecked pending human verification, per explicit user decision to proceed to review with this caveat documented.

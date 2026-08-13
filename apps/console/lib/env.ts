@@ -2,9 +2,18 @@ import { z } from 'zod';
 
 // Consistency-conventions: environment variables are validated at startup
 // against a schema; the process refuses to boot on a missing or malformed
-// value. This story only validates the vars it introduces (Clerk +
-// Supabase) — Story 1.6 generalizes the pattern to every subsequent story's
-// vars.
+// value. This story (1.5) only validates the vars it introduces (Clerk +
+// Supabase).
+//
+// Story 1.6 confirmed this module — module-load-time safeParse, throws on
+// failure — is already the binding AC4 pattern for every later story's new
+// env vars: add the var to envSchema above (with a validator specific to
+// its shape, not just z.string()) rather than reading process.env directly
+// anywhere else. packages/adapters and every other package in this monorepo
+// receive config as explicit function arguments instead of reading
+// process.env themselves (grep confirms this as of Story 1.6) — keep it
+// that way so service-role/secret values stay traceable to this one
+// validated source.
 const envSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1, 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required'),
   CLERK_SECRET_KEY: z.string().min(1, 'CLERK_SECRET_KEY is required'),
