@@ -1,0 +1,22 @@
+{
+  "common.appName": "لوحة",
+  "common.saveLabel": "حفظ التغييرات",
+  "common.errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "common.greeting": "مرحبًا يا {name}!",
+  "i18nCheck.langEn": "EN",
+  "i18nCheck.langAr": "AR",
+  "shell.skipToContent": "تخطَّ إلى المحتوى",
+  "shell.nav.screens": "الشاشات",
+  "shell.nav.media": "الوسائط",
+  "shell.nav.playlists": "قوائم التشغيل",
+  "shell.nav.schedules": "الجداول",
+  "shell.nav.branches": "الفروع",
+  "shell.nav.billing": "الفوترة",
+  "shell.nav.settings": "الإعدادات",
+  "shell.nav.menuTrigger": "القائمة",
+  "shell.nav.close": "إغلاق",
+  "shell.language.labelEn": "English",
+  "shell.language.labelAr": "العربية",
+  "shell.theme.light": "فاتح",
+  "shell.theme.dark": "داكن"
+}

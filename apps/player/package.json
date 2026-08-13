@@ -1,0 +1,28 @@
+{
+  "name": "@lawha/player",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:tokens": "tsx scripts/generate-tokens-css.ts",
+    "dev": "pnpm run generate:tokens && vite",
+    "build": "pnpm run generate:tokens && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "preact": "catalog:",
+    "@lawha/tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "@preact/preset-vite": "catalog:",
+    "typescript": "catalog:",
+    "tsx": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript-eslint": "catalog:",
+    "@lawha/eslint-plugin-lawha": "workspace:*"
+  }
+}

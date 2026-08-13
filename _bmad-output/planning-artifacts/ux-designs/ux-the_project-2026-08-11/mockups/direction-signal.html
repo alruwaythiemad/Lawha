@@ -1,0 +1,185 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Direction D: Signal</title>
+<style>
+/* ── DIRECTION D: "SIGNAL" ───────────────────────────────────────────
+   Palette (documented for DESIGN.md extraction):
+     ground     #FFFFFF
+     ink        #000000   true black, used structurally as 1px rules
+     muted      #666666
+     electric   #0F2BFF   interactive — links, buttons, focus rings
+     alarm      #FF2D00   offline. solid fill, never a tint
+     amber      #FFB800   device caveat. solid fill.
+   Radius: 0px, everywhere, no exceptions. Elevation: none — zero shadows.
+   Structure is 1px black rules and solid blocks of colour.
+   Intended type: a grotesk with a very wide weight range (Suisse Int'l /
+   Inter at 800 for heads, 500 for body). Micro-labels uppercase, .16em.
+   Arabic: Almarai Bold / IBM Plex Sans Arabic Bold — the weight contrast
+   is the identity, and it has to survive in Arabic too.
+   Motion implication: none. Snap. No transitions at all.
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E4E4E4;color:#000;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:40px 24px;-webkit-font-smoothing:antialiased}
+.page{max-width:1080px;margin:0 auto}
+.rationale{background:#000;color:#FFF;padding:28px 32px;margin-bottom:30px}
+.rationale h1{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:13px;color:#FFB800}
+.rationale p{max-width:64ch;font-size:15px;line-height:1.6;font-weight:400}
+.rationale p+p{margin-top:10px}
+.caption{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#666;margin:32px 0 9px}
+
+.frame{background:#FFF;border:1px solid #000}
+.chrome{border-bottom:1px solid #000;padding:8px 12px;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border:1px solid #000}
+.url{margin-inline-start:11px;font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#666}
+
+.app{display:grid;grid-template-columns:186px 1fr;min-height:500px}
+.nav{border-inline-end:1px solid #000;padding:20px 0}
+.brand{font-size:20px;font-weight:800;letter-spacing:-.03em;padding:0 18px 22px;text-transform:uppercase}
+.nav a{display:block;padding:8px 18px;color:#000;text-decoration:none;font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.nav a.on{background:#000;color:#FFF;font-weight:800}
+.meter{margin:22px 18px 0;padding-top:16px;border-top:1px solid #000;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.bar{height:8px;border:1px solid #000;margin:8px 0 6px}
+.bar i{display:block;height:6px;background:#000;width:34%}
+.mono{font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0;text-transform:none;font-weight:400}
+
+.main{padding:0}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #000}
+.toolbar h2{font-size:24px;font-weight:800;letter-spacing:-.035em;text-transform:uppercase}
+.btn{background:#0F2BFF;color:#FFF;border:0;padding:9px 16px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;cursor:pointer}
+.btn.k{background:#000}
+
+.strip{background:#FF2D00;color:#000;padding:13px 20px;font-size:13.5px;font-weight:500;display:flex;gap:12px;align-items:baseline}
+.strip b{font-weight:800;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.strip a{color:#000;text-decoration:underline 2px;font-weight:800}
+
+.grouphead{display:flex;align-items:center;padding:10px 20px;border-bottom:1px solid #000;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.grouphead .health{margin-inline-start:auto;font-weight:500;letter-spacing:.06em}
+.tr{display:grid;grid-template-columns:1.4fr 1.3fr 96px 74px;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid #DADADA}
+.nm{font-size:15px;font-weight:700;letter-spacing:-.012em}
+.pl{color:#666;font-size:13.5px}
+.tm{font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#666}
+.tag{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 7px;text-align:center}
+.tag.live{color:#000;border:1px solid #DADADA}
+.tag.off{background:#FF2D00;color:#FFF}
+.tag.tv{background:#FFB800;color:#000}
+.tr.off{border-bottom:1px solid #000;border-top:1px solid #000}
+.detail{grid-column:1/-1;font-size:13.5px;font-weight:500;line-height:1.5;padding-top:9px;max-width:66ch}
+
+.rtl{direction:rtl}
+.rtl .nav a.on{background:#000}
+.ar{font-family:"Geeza Pro","Noto Naskh Arabic",-apple-system,sans-serif}
+.num{direction:ltr;unicode-bidi:isolate;display:inline-block}
+
+.empty{padding:70px 24px;text-align:center;border-bottom:1px solid #000}
+.empty h3{font-size:28px;font-weight:800;letter-spacing:-.035em;text-transform:uppercase;margin-bottom:12px}
+.empty p{color:#666;max-width:44ch;margin:0 auto 22px;font-weight:500}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tv{aspect-ratio:16/9;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7%}
+.tvo{background:#FFF;border:1px solid #000}
+.lbl{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+.code{font:800 56px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;margin:16px 0 14px}
+.hint{font-size:13px;color:#666;max-width:34ch;font-weight:500}
+.tvc{background:#0A0A0A;border:1px solid #0A0A0A}
+.tvc .mark{width:32px;height:32px;border:1px solid #2A2A2A}
+.badge{position:absolute;inset-block-end:4%;inset-inline-end:4%;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.3}
+.tvlabel{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:8px}
+</style>
+
+<div class="page">
+  <div class="rationale">
+    <h1>Direction D — “Signal”</h1>
+    <p>Minimal as <em>reduction to zero</em>. No radii, no shadows, no gradients, no tints. Structure is 1px black rules; the only colour in the product is a status block, and it is always solid — never a soft background wash.</p>
+    <p>This direction resolves your tension most bluntly: an offline screen produces a full-bleed red strip across the page. It is genuinely impossible to miss. It is also loud in a way that could read as alarming for a single screen having a two-minute Wi-Fi wobble.</p>
+    <p>Highest-contrast and the strongest accessibility floor by default. Carries the most brand personality and therefore the most risk — this is a look people either love or find shouty, and it constrains the marketing site to match.</p>
+  </div>
+
+  <div class="caption">Hero — Screens, English</div>
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">Lawha</div>
+        <a href="#" class="on">Screens</a>
+        <a href="#">Media</a>
+        <a href="#">Playlists</a>
+        <a href="#">Schedules</a>
+        <a href="#">Branches</a>
+        <a href="#">Billing</a>
+        <div class="meter">Storage<div class="bar"><i></i></div><span class="mono">1.7 / 5 GB</span></div>
+      </nav>
+      <div class="main">
+        <div class="toolbar"><h2>Screens</h2><button class="btn">Add a screen</button></div>
+        <div class="strip"><b>1 screen offline</b><span>Back Wall stopped reporting at 09:14. What's on that wall is unconfirmed. <a href="#">What to check</a></span></div>
+
+        <div class="grouphead">Main branch <span class="health">2 online / 1 offline</span></div>
+        <div class="tr"><span class="nm">Front Counter</span><span class="pl">Lunch Menu</span><span class="tm">now</span><span class="tag live">Live</span></div>
+        <div class="tr"><span class="nm">Window Display</span><span class="pl">Weekend Offers</span><span class="tm">now</span><span class="tag live">Live</span></div>
+        <div class="tr off">
+          <span class="nm">Back Wall</span><span class="pl">Lunch Menu — last known</span><span class="tm">09:14</span><span class="tag off">Offline</span>
+          <div class="detail">Offline since 09:14 today. Check power and Wi-Fi at the screen. Playback resumes by itself once it reconnects — nothing to rebuild.</div>
+        </div>
+
+        <div class="grouphead">Al Hamra branch <span class="health">2 online</span></div>
+        <div class="tr"><span class="nm">Entrance</span><span class="pl">Weekend Offers</span><span class="tm">now</span><span class="tag live">Live</span></div>
+        <div class="tr">
+          <span class="nm">Drive-Thru Menu</span><span class="pl">Lunch Menu</span><span class="tm">now</span><span class="tag tv">Smart TV</span>
+          <div class="detail">Lawha cannot restart this screen after a power cut. It will stay dark until someone turns it back on.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Same screen, Arabic — RTL mirror. Weight contrast must survive in Arabic, which is the real test of this direction.</div>
+  <div class="frame rtl ar">
+    <div class="chrome" dir="ltr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/ar/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">لوحة</div>
+        <a href="#" class="on">الشاشات</a>
+        <a href="#">الوسائط</a>
+        <a href="#">قوائم التشغيل</a>
+        <a href="#">المواعيد</a>
+        <a href="#">الفروع</a>
+        <a href="#">الفواتير</a>
+        <div class="meter">مساحة التخزين<div class="bar"><i></i></div><span class="mono num">1.7 / 5 GB</span></div>
+      </nav>
+      <div class="main">
+        <div class="toolbar"><h2>الشاشات</h2><button class="btn">إضافة شاشة</button></div>
+        <div class="strip"><b>شاشة واحدة غير متصلة</b><span>توقّفت شاشة الحائط الخلفي عن الإبلاغ الساعة <span class="num">9:14</span>. ما يظهر عليها الآن غير مؤكد. <a href="#">ما الذي يجب فحصه</a></span></div>
+        <div class="grouphead">الفرع الرئيسي <span class="health">متصلة <span class="num">2</span> / غير متصلة <span class="num">1</span></span></div>
+        <div class="tr"><span class="nm">شاشة الكاشير</span><span class="pl">قائمة الغداء</span><span class="tm">الآن</span><span class="tag live">تعمل</span></div>
+        <div class="tr off">
+          <span class="nm">شاشة الحائط الخلفي</span><span class="pl">قائمة الغداء — آخر ما تم تأكيده</span><span class="tm"><span class="num">09:14</span></span><span class="tag off">غير متصلة</span>
+          <div class="detail">غير متصلة منذ الساعة <span class="num">9:14</span> صباح اليوم. تحقّق من الكهرباء والشبكة عند الشاشة. سيستأنف العرض تلقائيًا عند إعادة الاتصال — لا شيء يحتاج إعادة بناء.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Empty state</div>
+  <div class="frame">
+    <div class="empty">
+      <h3>No screens yet</h3>
+      <p>Open Lawha on your TV. It shows a six-character code — type it here and the screen is yours.</p>
+      <button class="btn">Enter pairing code</button>
+    </div>
+  </div>
+
+  <div class="caption">Player, two registers</div>
+  <div class="grid2">
+    <div>
+      <div class="tvlabel">Owner register — pairing</div>
+      <div class="tv tvo">
+        <div class="lbl">Pairing code</div>
+        <div class="code">7K2QF9</div>
+        <div class="hint">Enter this in Lawha under Screens.</div>
+        <div class="badge">Lawha</div>
+      </div>
+    </div>
+    <div>
+      <div class="tvlabel">Customer register — stopped (FR-63b)</div>
+      <div class="tv tvc"><div class="mark"></div></div>
+    </div>
+  </div>
+</div>

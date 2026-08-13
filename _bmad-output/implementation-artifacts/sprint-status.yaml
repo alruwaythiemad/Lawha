@@ -1,0 +1,122 @@
+# generated: 2026-08-12
+# last_updated: 2026-08-13 (story 1-4 created)
+# project: the_project
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; sprint-status surfaces open ones
+
+generated: 2026-08-12
+last_updated: 2026-08-13 (story 1-4 code review complete, done)
+project: the_project
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-shared-design-token-layer: done
+  1-2-bilingual-foundation-rtl-primitives: done
+  1-3-console-shell-navigation: done
+  1-4-accessibility-rtl-enforcement-for-the-shell: done
+  1-5-owner-registration-sign-in-workspace-creation: in-progress
+  1-6-api-foundations-workspace-scoped-access-honest-errors: backlog
+  1-7-owner-language-preference-persistence: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-screens-home: backlog
+  2-2-pair-a-screen: backlog
+  2-3-screen-detail: backlog
+  2-4-device-registration-pairing-code-issuance: backlog
+  2-5-screen-claim-entitlement-device-credential: backlog
+  2-6-heartbeat-read-time-status-derivation: backlog
+  2-7-screen-management-rename-reassign-remove-re-pair: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-player-state-rendering-all-eight-states: backlog
+  3-2-fixture-harness-for-player-states: backlog
+  3-3-local-media-caching-offline-playback: backlog
+  3-4-fault-detection-recovery-ladder-wake-lock: backlog
+  3-5-memory-bounding-during-decode: backlog
+  3-6-content-playlist-change-application: backlog
+  3-7-local-schedule-evaluation-trusted-time: backlog
+  3-8-player-locale-font-delivery: backlog
+  3-9-player-build-versioning-canary-rollout: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-media-library-uploader: backlog
+  4-2-real-media-upload-object-storage: backlog
+  4-3-media-library-listing-deletion: backlog
+  4-4-storage-meter-pooled-allowance: backlog
+  4-5-client-side-flash-content-check-policy-wiring: backlog
+  4-6-cacheable-media-delivery: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-playlist-editor: backlog
+  5-2-playlist-crud-ordering: backlog
+  5-3-screen-assignment-two-step-confirmation: backlog
+  5-4-manifest-assembly-single-path-auto-propagation-revisioning: backlog
+  5-5-manifest-activation-fully-cached-only-locale-field: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-schedule-editor: backlog
+  6-2-schedule-crud-fallback: backlog
+  6-3-precedence-resolution-resolved-weekly-timetable: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-branches-surface: backlog
+  7-2-branch-crud-screen-grouping: backlog
+  7-3-bulk-playlist-assignment-undo: backlog
+  7-4-branch-level-scheduling-timezone-inheritance: backlog
+  7-5-per-branch-health-screen-movement-billing-independence: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-billing-entitlement-surface: backlog
+  8-2-settings-surface: backlog
+  8-3-payment-provider-abstraction-plan-selection: backlog
+  8-4-webhook-reconciliation-subscription-state: backlog
+  8-5-real-entitlement-enforcement-plan-management: backlog
+  8-6-subscription-termination-restoration: backlog
+  8-7-trial-branding-removal: backlog
+  epic-8-retrospective: optional

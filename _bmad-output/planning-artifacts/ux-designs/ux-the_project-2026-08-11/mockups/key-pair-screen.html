@@ -1,0 +1,127 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Key screen: Pair a screen at 390px</title>
+<style>
+/* ── KEY SCREEN: PAIR A SCREEN (390px) ───────────────────────────────
+   Governed by:
+     EXPERIENCE.md > Component Patterns > "Pairing code input"
+       — six characters, ONE field, auto-focused, accepts lower case and a
+         whole-code paste, never six boxes with per-character focus movement
+     EXPERIENCE.md > Key Flows > Flow 1, steps 3-4 (Yusuf, 1 min + 1 min)
+     EXPERIENCE.md > Responsive & Platform — "pairing must work at 390px"
+     EXPERIENCE.md > Voice and Tone — every message names the condition AND
+       the next action (NFR-9); three distinct failures, three distinct fixes
+     DESIGN.md > Components > button-primary / input / focus-ring
+     DESIGN.md > Layout & Spacing — below 640px regions run full-bleed to the
+       viewport edge with no inline margin; zero radius makes this free
+   Tokens: background #FFFFFF · foreground #000000 · muted-foreground #666666
+           border/input #000000 · electric #0F2BFF · alarm #FF2D00
+           alarm-foreground #000000 (black on red — white fails AA at 3.73:1)
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E4E4E4;color:#000;font:500 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:36px 20px;-webkit-font-smoothing:antialiased}
+.page{max-width:1240px;margin:0 auto}
+.note{background:#000;color:#fff;padding:20px 24px;margin-bottom:26px;font-size:14px;line-height:1.6;max-width:80ch}
+.note b{font-weight:800}
+.row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.col{width:390px}
+.cap{font:800 10px/1.4 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:9px;min-height:28px}
+
+/* 390px phone viewport — full-bleed, no inline margin */
+.vp{width:390px;background:#fff;border:1px solid #000}
+.status{height:26px;border-bottom:1px solid #DADADA;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:11px;color:#666;font-variant-numeric:tabular-nums}
+
+.top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #000;min-height:52px}
+.back{width:44px;min-height:44px;border:1px solid #000;background:#fff;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.top h1{font:800 18px/1.1 -apple-system,sans-serif;letter-spacing:-.025em}
+
+.body{padding:20px 16px 24px}
+.lede{font-size:15px;line-height:1.55;margin-bottom:6px}
+.lede b{font-weight:800}
+.hint{font-size:13px;color:#666;margin-bottom:20px}
+
+label.k{display:block;font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:8px}
+/* ONE field. Not six boxes — Yusuf is looking up at a TV between characters. */
+.code{display:block;width:100%;border:1px solid #000;background:#fff;padding:16px 14px;font:800 34px/1 -apple-system,sans-serif;letter-spacing:.22em;text-align:center;min-height:44px;color:#000;font-variant-numeric:tabular-nums}
+.code::placeholder{color:#DADADA;font-weight:800}
+.code.focused{outline:2px solid #0F2BFF;outline-offset:2px}
+.meta{display:flex;justify-content:space-between;gap:10px;margin-top:9px;font-size:12px;color:#666;font-variant-numeric:tabular-nums}
+.cta{display:block;width:100%;background:#0F2BFF;color:#fff;border:0;margin-top:18px;padding:15px;font:800 11px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;min-height:44px;cursor:pointer}
+.cta[disabled]{background:#fff;color:#666;border:1px solid #DADADA;cursor:default}
+.alt{display:block;width:100%;background:transparent;color:#000;border:1px solid #000;margin-top:10px;padding:15px;font:800 11px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;min-height:44px;cursor:pointer}
+
+/* failures — full-bleed, black on red, condition + next action */
+.err{background:#FF2D00;color:#000;padding:14px 16px;font-size:13.5px;line-height:1.5;font-weight:500}
+.err b{font-weight:800;display:block;margin-bottom:4px}
+.err a{color:#000;font-weight:800}
+.code.bad{border-width:2px}
+
+.link{color:#0F2BFF;font-weight:700;text-decoration:none;border-bottom:1px solid #0F2BFF}
+.sr{padding:14px 16px;border-top:1px solid #DADADA;font-size:12px;color:#666;line-height:1.5}
+</style>
+
+<div class="page">
+  <div class="note">
+    <b>Why one field and not six boxes.</b> Yusuf is standing in his café holding a phone, looking up at a code on the TV and back down between characters. Six boxes with auto-advancing focus lose his place every time he looks away, and they defeat pasting. One field, auto-focused, case-insensitive, accepting a whole-code paste. It never validates per character.
+    <br><br><b>Three failures, three different next actions.</b> A wrong code, an expired code — where the player has <em>already</em> generated and displayed a fresh one (FR-16), so the fix is to look back up at the TV — and the entitlement ceiling (FR-59), which is not a pairing problem at all and has to say so.
+  </div>
+
+  <div class="row">
+
+    <div class="col">
+      <div class="cap">At rest — auto-focused, ready</div>
+      <div class="vp">
+        <div class="status"><span>09:41</span><span>Lawha</span></div>
+        <div class="top"><button class="back">←</button><h1>Add a screen</h1></div>
+        <div class="body">
+          <p class="lede">Open Lawha on your TV. It shows a <b>six-character code</b>.</p>
+          <p class="hint">Type it here and the screen is yours.</p>
+          <label class="k" for="c1">Pairing code</label>
+          <input id="c1" class="code focused" value="7K2QF9" readonly>
+          <div class="meta"><span>Codes last 15 minutes</span><span>6 of 6</span></div>
+          <button class="cta">Claim this screen</button>
+        </div>
+        <div class="sr">Lower case is fine. You can paste the whole code.</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="cap">Expired — the TV already shows a new one</div>
+      <div class="vp">
+        <div class="status"><span>09:58</span><span>Lawha</span></div>
+        <div class="top"><button class="back">←</button><h1>Add a screen</h1></div>
+        <div class="err">
+          <b>That code has expired.</b>
+          Your TV has already put a new one on screen. Read the new code and type it here — nothing is lost.
+        </div>
+        <div class="body">
+          <label class="k" for="c2">Pairing code</label>
+          <input id="c2" class="code bad" value="7K2QF9" readonly>
+          <div class="meta"><span>Codes last 15 minutes</span><span>6 of 6</span></div>
+          <button class="cta">Claim this screen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="cap">Entitlement ceiling — not a pairing problem</div>
+      <div class="vp">
+        <div class="status"><span>10:12</span><span>Lawha</span></div>
+        <div class="top"><button class="back">←</button><h1>Add a screen</h1></div>
+        <div class="err">
+          <b>You're paying for 5 screens and all 5 are in use.</b>
+          The code is fine — there's no room for it yet. Add a screen to your plan, or remove one you no longer use.
+        </div>
+        <div class="body">
+          <label class="k" for="c3">Pairing code</label>
+          <input id="c3" class="code" value="B4M8XT" readonly>
+          <div class="meta"><span>Code is valid</span><span>6 of 6</span></div>
+          <button class="cta" disabled>Claim this screen</button>
+          <button class="alt">Change my plan</button>
+          <p class="hint" style="margin:16px 0 0">Screens in use: <b>5 of 5</b>. Branches, playlists and media are unlimited — only screens count.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

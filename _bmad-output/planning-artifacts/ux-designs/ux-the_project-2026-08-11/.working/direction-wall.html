@@ -1,0 +1,199 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Direction A: Wall</title>
+<style>
+/* ── DIRECTION A: "WALL" ─────────────────────────────────────────────
+   Palette (documented for DESIGN.md extraction):
+     ground     #FAFAF8   paper, warm-neutral white
+     ink        #111111   primary text
+     muted      #6E6E68   secondary text, metadata
+     hairline   #DFDFD8   the only structural device — no cards, no shadows
+     signal     #C8352B   alarm ONLY. Healthy state has no colour at all.
+   Radius: 0px everywhere. Elevation: none — depth comes from whitespace.
+   Intended type: a grotesk with tight display tracking (Inter Tight /
+   Söhne / Helvetica Now). Arabic display: IBM Plex Sans Arabic.
+   Rendered here with system stacks — no network.
+   Motion implication: none. State changes are instant.
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#EDEDE8;color:#111;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:40px 24px}
+.page{max-width:1080px;margin:0 auto}
+.rationale{background:#111;color:#FAFAF8;padding:28px 32px;margin-bottom:32px}
+.rationale h1{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;color:#8A8A82}
+.rationale p{max-width:64ch;font-size:16px;line-height:1.55;color:#EDEDE8}
+.rationale p+p{margin-top:10px}
+.caption{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A82;margin:36px 0 10px}
+
+/* browser frame */
+.frame{background:#FAFAF8;border:1px solid #DFDFD8}
+.chrome{border-bottom:1px solid #DFDFD8;padding:9px 14px;display:flex;align-items:center;gap:7px;background:#F2F2EE}
+.dot{width:9px;height:9px;border-radius:50%;background:#DFDFD8}
+.url{margin-inline-start:12px;font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#8A8A82}
+
+.app{display:grid;grid-template-columns:190px 1fr;min-height:520px}
+.nav{border-inline-end:1px solid #DFDFD8;padding:26px 0}
+.brand{font-size:19px;font-weight:600;letter-spacing:-.02em;padding:0 22px 26px}
+.nav a{display:block;padding:8px 22px;color:#6E6E68;text-decoration:none;font-size:14px}
+.nav a.on{color:#111;font-weight:500;box-shadow:inset 2px 0 0 #111}
+.nav .meter{margin:30px 22px 0;font-size:11px;color:#8A8A82;letter-spacing:.06em;text-transform:uppercase}
+.bar{height:2px;background:#DFDFD8;margin-top:7px}
+.bar i{display:block;height:2px;background:#6E6E68;width:34%}
+
+.main{padding:34px 40px}
+.h{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:34px}
+.h h2{font-size:40px;font-weight:500;letter-spacing:-.028em;line-height:1}
+.btn{border:1px solid #111;background:none;color:#111;padding:9px 18px;font-size:14px;cursor:pointer}
+
+.branch{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A82;padding-bottom:9px;border-bottom:1px solid #111;margin-top:30px}
+.branch:first-of-type{margin-top:0}
+.row{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:baseline;padding:17px 0;border-bottom:1px solid #DFDFD8}
+.name{font-size:17px;font-weight:500;letter-spacing:-.012em}
+.sub{font-size:13px;color:#6E6E68;margin-top:3px}
+.when{font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#8A8A82;white-space:nowrap}
+
+/* the escalation. healthy rows carry no colour, no badge, no icon. */
+.row.alarm{border-bottom-color:#C8352B;box-shadow:inset 3px 0 0 #C8352B;padding-inline-start:15px;margin-inline-start:-15px}
+.row.alarm .name{color:#C8352B}
+.alarmline{grid-column:1/-1;font-size:13px;color:#C8352B;margin-top:9px;max-width:60ch}
+.row.stale{box-shadow:inset 3px 0 0 #DFDFD8;padding-inline-start:15px;margin-inline-start:-15px}
+.staleline{grid-column:1/-1;font-size:13px;color:#6E6E68;margin-top:9px}
+
+/* rtl mirror */
+.rtl{direction:rtl}
+.rtl .nav a.on{box-shadow:inset -2px 0 0 #111}
+.rtl .row.alarm,.rtl .row.stale{box-shadow:inset -3px 0 0 #C8352B}
+.rtl .row.stale{box-shadow:inset -3px 0 0 #DFDFD8}
+.ar{font-family:"Geeza Pro","Noto Naskh Arabic",-apple-system,sans-serif}
+
+/* empty state */
+.empty{padding:80px 40px;text-align:center}
+.empty h3{font-size:30px;font-weight:500;letter-spacing:-.025em;margin-bottom:12px}
+.empty p{color:#6E6E68;max-width:44ch;margin:0 auto 26px}
+
+/* player registers */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.tv{aspect-ratio:16/9;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8%}
+.tv.owner{background:#FAFAF8;border:1px solid #DFDFD8}
+.tv.owner .code{font:600 54px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;margin:18px 0 14px}
+.tv.owner .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8A8A82}
+.tv.owner .hint{font-size:13px;color:#6E6E68;max-width:34ch}
+.tv.cust{background:#1A1A18;border:1px solid #1A1A18}
+.tv.cust .mark{width:34px;height:34px;border:1px solid #4A4A46;border-radius:50%}
+/* FR-79/80: trial badge — <2% area, inside outer 10% margin, low opacity, no motion */
+.badge{position:absolute;inset-block-end:4%;inset-inline-end:4%;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#111;opacity:.34}
+.tvlabel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A82;margin-bottom:8px}
+</style>
+
+<div class="page">
+  <div class="rationale">
+    <h1>Direction A — “Wall”</h1>
+    <p>Signage is a print discipline before it is a software one, so this direction borrows from print: hairline rules instead of cards, no shadows, no fills, and one accent colour reserved entirely for alarm. Healthy screens carry <em>no</em> badge, no dot, no green — the absence of colour <em>is</em> the healthy state.</p>
+    <p>That makes the escalation impossible to miss, because it's the only coloured thing on the page. The cost is that a first-time owner has to learn that quiet means good.</p>
+    <p>Low density, large display type, generous air. Reads confident and editorial; risks reading austere.</p>
+  </div>
+
+  <div class="caption">Hero — Screens, English</div>
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">Lawha</div>
+        <a href="#" class="on">Screens</a>
+        <a href="#">Media</a>
+        <a href="#">Playlists</a>
+        <a href="#">Schedules</a>
+        <a href="#">Branches</a>
+        <a href="#">Billing</a>
+        <div class="meter">Storage<div class="bar"><i></i></div>1.7 of 5 GB</div>
+      </nav>
+      <div class="main">
+        <div class="h">
+          <h2>Screens</h2>
+          <button class="btn">Add a screen</button>
+        </div>
+
+        <div class="branch">Main branch · 3 screens</div>
+        <div class="row">
+          <div><div class="name">Front Counter</div><div class="sub">Playing Lunch Menu</div></div>
+          <div class="when">now</div>
+        </div>
+        <div class="row">
+          <div><div class="name">Window Display</div><div class="sub">Playing Weekend Offers</div></div>
+          <div class="when">now</div>
+        </div>
+        <div class="row alarm">
+          <div><div class="name">Back Wall</div><div class="sub">Was playing Lunch Menu</div></div>
+          <div class="when">09:14</div>
+          <div class="alarmline">Offline since 09:14 today. The last content we confirmed is above — it may not be what's on the wall now. Check the screen's power and Wi-Fi.</div>
+        </div>
+
+        <div class="branch">Al Hamra branch · 2 screens</div>
+        <div class="row">
+          <div><div class="name">Entrance</div><div class="sub">Playing Weekend Offers</div></div>
+          <div class="when">now</div>
+        </div>
+        <div class="row stale">
+          <div><div class="name">Drive-Thru Menu</div><div class="sub">Playing Lunch Menu</div></div>
+          <div class="when">now</div>
+          <div class="staleline">This screen is a smart TV. If it loses power it will stay dark until someone restarts it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Same screen, Arabic — full RTL mirror (FR-47). Nav origin, rule inset and column order all invert.</div>
+  <div class="frame rtl ar">
+    <div class="chrome" dir="ltr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/ar/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">لوحة</div>
+        <a href="#" class="on">الشاشات</a>
+        <a href="#">الوسائط</a>
+        <a href="#">قوائم التشغيل</a>
+        <a href="#">المواعيد</a>
+        <a href="#">الفروع</a>
+        <a href="#">الفواتير</a>
+        <div class="meter">مساحة التخزين<div class="bar"><i></i></div><span dir="ltr">1.7 / 5 GB</span></div>
+      </nav>
+      <div class="main">
+        <div class="h"><h2>الشاشات</h2><button class="btn">إضافة شاشة</button></div>
+        <div class="branch">الفرع الرئيسي · ٣ شاشات</div>
+        <div class="row">
+          <div><div class="name">شاشة الكاشير</div><div class="sub">تعرض قائمة الغداء</div></div>
+          <div class="when">الآن</div>
+        </div>
+        <div class="row alarm">
+          <div><div class="name">شاشة الحائط الخلفي</div><div class="sub">كانت تعرض قائمة الغداء</div></div>
+          <div class="when" dir="ltr">09:14</div>
+          <div class="alarmline">غير متصلة منذ الساعة <span dir="ltr">9:14</span> صباح اليوم. المحتوى المؤكد أعلاه قد لا يكون ما يظهر على الشاشة الآن. تحقّق من الكهرباء والاتصال بالشبكة.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Empty state — Yusuf, thirty seconds after signing up</div>
+  <div class="frame">
+    <div class="empty">
+      <h3>No screens yet</h3>
+      <p>Open Lawha on your TV. It will show you a six-character code — type it here and the screen is yours.</p>
+      <button class="btn">Enter a pairing code</button>
+    </div>
+  </div>
+
+  <div class="caption">Player, two registers</div>
+  <div class="grid2">
+    <div>
+      <div class="tvlabel">Owner register — pairing, branded &amp; instructional</div>
+      <div class="tv owner">
+        <div class="lbl">Pairing code</div>
+        <div class="code">7K2QF9</div>
+        <div class="hint">Type this into Lawha on your phone or computer, under Screens.</div>
+        <div class="badge">Lawha</div>
+      </div>
+    </div>
+    <div>
+      <div class="tvlabel">Customer register — stopped (FR-63b), anonymous</div>
+      <div class="tv cust"><div class="mark"></div></div>
+    </div>
+  </div>
+</div>

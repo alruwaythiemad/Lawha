@@ -1,0 +1,170 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Key screen: Schedules (resolved outcome)</title>
+<style>
+/* ── KEY SCREEN: SCHEDULES ───────────────────────────────────────────
+   Governed by:
+     EXPERIENCE.md > Component Patterns > "Schedule editor"
+       — presents the RESOLVED outcome, never the precedence rules
+     EXPERIENCE.md > The Truth Contract (rules 1-3)
+     EXPERIENCE.md > State Patterns > "Player states never fail visibly"
+     DESIGN.md > Colors — colour is signal ONLY. Consequence carried here:
+       playlist blocks CANNOT be colour-coded. They are ink-outlined, and the
+       only coloured block on this surface is {colors.amber}, marking a window
+       where nothing is scheduled and the wall will show a holding card.
+     DESIGN.md > Shapes (0px), Elevation & Depth (none), Layout & Spacing
+       ({spacing.section-gap} = 0 — regions abut, separated by 1px rules)
+   Tokens: background #FFFFFF · foreground #000000 · muted-foreground #666666
+           border #000000 · divider #DADADA · electric #0F2BFF
+           amber #FFB800 (amber-foreground #000000)
+   Intended type: Inter variable. Rendered with system stack, no network.
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E4E4E4;color:#000;font:500 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:36px 20px;-webkit-font-smoothing:antialiased}
+.page{max-width:1120px;margin:0 auto}
+.cap{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:9px}
+.note{background:#000;color:#fff;padding:20px 24px;margin-bottom:26px;font-size:14px;line-height:1.6;max-width:78ch}
+.note b{font-weight:800}
+
+.frame{background:#fff;border:1px solid #000}
+.chrome{border-bottom:1px solid #000;padding:8px 12px;display:flex;gap:6px;align-items:center}
+.d{width:8px;height:8px;border:1px solid #000}
+.url{margin-inline-start:11px;font-size:11px;color:#666}
+
+/* header region */
+.hd{padding:18px 20px;border-bottom:1px solid #000;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.hd h1{font:800 24px/1.05 -apple-system,sans-serif;letter-spacing:-.035em}
+.hd .crumb{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:7px}
+.btn{background:#0F2BFF;color:#fff;border:0;padding:10px 16px;font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;min-height:44px}
+.btn2{background:transparent;color:#000;border:1px solid #000;padding:10px 16px;font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;min-height:44px}
+
+/* THE ANSWER — the resolved outcome, stated before anything else */
+.answer{padding:20px;border-bottom:1px solid #000;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
+.answer .k{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:8px}
+.answer .v{font:800 24px/1.1 -apple-system,sans-serif;letter-spacing:-.03em}
+.answer .sub{font-size:13px;color:#666;margin-top:6px}
+.tnum{font-variant-numeric:tabular-nums}
+.ask{border:1px solid #000;display:flex;align-items:stretch}
+.ask label{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;padding:14px 12px;border-inline-end:1px solid #DADADA;display:flex;align-items:center}
+.ask span{padding:14px 14px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center}
+
+/* resolved timetable */
+.tt{padding:20px;border-bottom:1px solid #000}
+.tt h2{font:700 16px/1.2 -apple-system,sans-serif;letter-spacing:-.02em;margin-bottom:4px}
+.tt p{font-size:13px;color:#666;margin-bottom:16px;max-width:70ch}
+.grid{display:grid;grid-template-columns:52px repeat(7,1fr);border-block-start:1px solid #000;border-inline-start:1px solid #000}
+.gh{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#666;padding:8px 6px;text-align:center;border-inline-end:1px solid #000;border-block-end:1px solid #000;background:#fff}
+.gt{font-size:11px;color:#666;padding:6px;text-align:end;border-inline-end:1px solid #000;border-block-end:1px solid #DADADA;font-variant-numeric:tabular-nums}
+.cell{border-inline-end:1px solid #000;border-block-end:1px solid #DADADA;padding:5px 6px;font-size:11px;font-weight:700;min-height:34px;color:#000;overflow:hidden}
+.cell.fill{background:#000;color:#fff}
+.cell.out{background:#fff;color:#000}
+.cell.hatch{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#EDEDED 4px,#EDEDED 8px);color:#666;font-weight:500}
+.cell.gap{background:#FFB800;color:#000}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:12px;color:#666;align-items:center}
+.legend i{display:inline-block;width:22px;height:14px;border:1px solid #000;margin-inline-end:7px;vertical-align:-2px}
+
+/* the windows, and what actually wins */
+.wins{padding:20px}
+.wins h2{font:700 16px/1.2 -apple-system,sans-serif;letter-spacing:-.02em;margin-bottom:14px}
+.w{border:1px solid #000;padding:14px 16px;margin-bottom:0;border-block-end:0}
+.w:last-of-type{border-block-end:1px solid #000}
+.w .top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.w .nm{font-weight:700;font-size:15px}
+.w .when{font-size:13px;color:#666;font-variant-numeric:tabular-nums}
+.w .lvl{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.14em;text-transform:uppercase;border:1px solid #DADADA;padding:4px 7px;color:#000}
+.w .says{font-size:13px;color:#000;margin-top:10px;padding-top:10px;border-top:1px solid #DADADA;max-width:74ch}
+.w.beaten .nm{color:#666}
+.w .amberbar{background:#FFB800;color:#000;padding:10px 12px;margin-top:11px;font-size:13px;font-weight:500;max-width:74ch}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+</style>
+
+<div class="page">
+  <div class="note">
+    <b>What this screen refuses to do.</b> Group E defines four precedence rules — screen beats branch, narrower beats wider, later beats earlier, fallback plays last. This surface never shows them, never explains them, and never asks the owner to apply them. It shows <b>the answer</b>: what plays, and when. Where a window he created is being overridden, it says which one wins in one sentence at the moment he's looking at it.
+    <br><br>Note the second consequence, from DESIGN.md: because colour is reserved for signal, <b>playlists cannot be colour-coded</b>. Blocks are distinguished by fill inversion and label. The only coloured block here is amber — the hours where nothing is scheduled and the wall falls back to a holding card.
+  </div>
+
+  <div class="cap">Schedules — screen level · light · ≥1024px</div>
+  <div class="frame">
+    <div class="chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="url">lawha.app/screens/front-counter/schedule</span></div>
+
+    <div class="hd">
+      <div><div class="crumb">Main branch · Front Counter</div><h1>Schedule</h1></div>
+      <div style="display:flex;gap:10px"><button class="btn2">Set fallback</button><button class="btn">Add a window</button></div>
+    </div>
+
+    <div class="answer">
+      <div>
+        <div class="k">On this screen right now</div>
+        <div class="v">Lunch Menu</div>
+        <div class="sub">Tuesday, <span class="tnum">13:04</span> — Riyadh time. Confirmed by the screen <span class="tnum">40</span> seconds ago.</div>
+      </div>
+      <div class="ask">
+        <label>What plays at</label>
+        <span class="tnum">Tue · 13:00</span>
+      </div>
+    </div>
+
+    <div class="tt">
+      <h2>What plays, hour by hour</h2>
+      <p>The resolved outcome for every hour of the week. This is what the wall will show — overlaps are already worked out.</p>
+      <div class="grid">
+        <div class="gh"></div>
+        <div class="gh">Sun</div><div class="gh">Mon</div><div class="gh">Tue</div><div class="gh">Wed</div><div class="gh">Thu</div><div class="gh">Fri</div><div class="gh">Sat</div>
+
+        <div class="gt">07:00</div>
+        <div class="cell out">Morning</div><div class="cell out">Morning</div><div class="cell out">Morning</div><div class="cell out">Morning</div><div class="cell out">Morning</div><div class="cell gap">Nothing</div><div class="cell out">Morning</div>
+
+        <div class="gt">10:00</div>
+        <div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell gap">Nothing</div><div class="cell hatch">Weekend Offers</div>
+
+        <div class="gt">12:00</div>
+        <div class="cell fill">Lunch Menu</div><div class="cell fill">Lunch Menu</div><div class="cell fill">Lunch Menu</div><div class="cell fill">Lunch Menu</div><div class="cell fill">Lunch Menu</div><div class="cell gap">Nothing</div><div class="cell fill">Lunch Menu</div>
+
+        <div class="gt">14:00</div>
+        <div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell hatch">Weekend Offers</div><div class="cell gap">Nothing</div><div class="cell hatch">Weekend Offers</div>
+
+        <div class="gt">22:00</div>
+        <div class="cell gap">Nothing</div><div class="cell gap">Nothing</div><div class="cell gap">Nothing</div><div class="cell gap">Nothing</div><div class="cell gap">Nothing</div><div class="cell gap">Nothing</div><div class="cell gap">Nothing</div>
+      </div>
+      <div class="legend">
+        <span><i style="background:#000"></i>Playing now</span>
+        <span><i style="background:#fff"></i>Scheduled window</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#fff,#fff 4px,#EDEDED 4px,#EDEDED 8px)"></i>Fallback playlist</span>
+        <span><i style="background:#FFB800"></i>Nothing scheduled — the wall shows a holding card</span>
+      </div>
+    </div>
+
+    <div class="wins">
+      <h2>Your windows</h2>
+
+      <div class="w">
+        <div class="top">
+          <div><span class="nm">Lunch Menu</span></div>
+          <div class="when">Sun–Thu, Sat · <span class="tnum">12:00–14:00</span></div>
+          <div class="lvl">This screen</div>
+        </div>
+      </div>
+
+      <div class="w beaten">
+        <div class="top">
+          <div><span class="nm">Weekend Offers</span></div>
+          <div class="when">Every day · <span class="tnum">10:00–22:00</span></div>
+          <div class="lvl">Main branch</div>
+        </div>
+        <div class="says">Between <span class="tnum">12:00</span> and <span class="tnum">14:00</span> this screen shows Lunch Menu instead. The window you set on this screen is the one that plays.</div>
+      </div>
+
+      <div class="w">
+        <div class="top">
+          <div><span class="nm">Morning</span></div>
+          <div class="when">Sun–Thu, Sat · <span class="tnum">07:00–10:00</span></div>
+          <div class="lvl">This screen</div>
+        </div>
+        <div class="amberbar">Friday has no window and no fallback, so this screen will show a holding card all day. Add a Friday window, or set a fallback playlist.</div>
+      </div>
+
+      <div class="actions"><button class="btn">Add a window</button><button class="btn2">Set a fallback playlist</button></div>
+    </div>
+  </div>
+</div>

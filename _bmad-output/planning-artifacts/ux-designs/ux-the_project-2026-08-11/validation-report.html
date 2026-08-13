@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UX Design Validation: Lawha</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .badge-fixed { background: rgba(22, 163, 74, 0.14); color: var(--verdict-strong); }
+  .badge-open { background: rgba(120, 113, 108, 0.14); color: var(--muted); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>Lawha — UX Design Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/ux-designs/ux-the_project-2026-08-11/{DESIGN,EXPERIENCE}.md</div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p>Two lenses ran in parallel over the spine pair: the <strong>rubric walker</strong> (43 findings — 2 critical, 8 high, 18 medium, 15 low) and an <strong>accessibility lens</strong> (22 findings — 3 critical, 6 high, 7 medium, 6 low). They converged: the direction is genuinely committed, every <code>{path.to.token}</code> reference resolved in both directions, all three load-bearing Chromium 76 capability claims checked out, and the contrast arithmetic was verified honest — seven of nine stated ratios exact to the published decimal, the two misses conservative.</p>
+      <p>Neither lens found the premise wrong. Both found the same structural weakness from different angles: <em>every failing combination in this system lives at a boundary the spine never measured, and all of them are boundaries its own zero-gap, full-bleed, solid-fill grammar creates.</em> The accessibility lens put it sharpest — the product's single most important object, the non-dismissible alarm banner, had no conformant treatment for a link or a focus ring on its red ground, worst case <strong>1.03:1</strong> in dark mode, which is not merely non-conformant but not rendered to the human eye.</p>
+      <p><strong>All 5 criticals and all 14 highs have been applied to the spines.</strong> Three items could not be closed in UX and are recorded as <a href="EXPERIENCE.md">Open Items</a> with owners and gates: the shadcn/Radix stack claim (architecture's call), the Clerk auth audit (a launch gate, not a phase-3 revisit), and flash safety on owner-uploaded video (WCAG 2.3.1, Level A, with a physical-harm dimension and a v1 scope cost). Findings marked <span class="badge badge-open">open</span> below are those three plus deliberate non-changes.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card"><div class="dim-name">Flow coverage</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin → fixed</div></div>
+      <div class="dim-card"><div class="dim-name">Token completeness</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin → fixed</div></div>
+      <div class="dim-card"><div class="dim-name">Component coverage</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin → fixed</div></div>
+      <div class="dim-card"><div class="dim-name">State coverage</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate → fixed</div></div>
+      <div class="dim-card"><div class="dim-name">Visual reference coverage</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin → fixed</div></div>
+      <div class="dim-card"><div class="dim-name">Bloat &amp; overspecification</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+      <div class="dim-card"><div class="dim-name">Inheritance discipline</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin → fixed</div></div>
+      <div class="dim-card"><div class="dim-name">Shape fit</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate → fixed</div></div>
+    </div>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>1. Flow coverage</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>Journey inheritance from PRD §3.1 was exemplary — protagonist sentence, all seven step strings, budgets and both consequences verbatim, with the added Surface column as the correct delta. The gap was requirement groups with no flow at all.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Group E (Scheduling) had no Key Flow, despite carrying the sharpest stated UX problem in the sources</h3><span class="finding-location">EXPERIENCE.md § Key Flows</span></header>
+            <div class="finding-note">"The dashboard surfaces the resolved outcome, not the rule" had one Component Patterns paragraph and no scene. No flow walked an owner creating a colliding window, so the sentence that must be generated at edit time had no worked example and no failure path.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added Flow 4 — lunch window over an all-day window, climax on the one-sentence collision message, failure path on a window with no playlist.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Group G (billing lifecycle) had no Key Flow, though it spans two surfaces and two registers</h3><span class="finding-location">EXPERIENCE.md § Key Flows</span></header>
+            <div class="finding-note">The trial → warning → stop → restore arc is the second-highest-consequence sequence in the product after a screen going dark, and it ends with content disappearing from a public wall. It was scattered across State Patterns and DESIGN.md's holding cards.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added Flow 5, five steps, climax at the customer-register card appearing on the wall, failure path at payment-restored-but-offline.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Flows 1 and 3 had no failure paths, though Flow 1 has the most enumerated failure modes in the product</h3><span class="finding-location">EXPERIENCE.md § Key Flows</span></header>
+            <div class="finding-note">Flow 1 gates success criterion 2. Both reference examples close every flow with an explicit failure line.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Failure paths added to both. Flow 1's names the <em>Preparing</em> window as the failure mode nobody plans for — the manifest has arrived, the revision is not yet cached, and calling that "playing" breaks Truth Contract rule 1 at the exact moment the fifteen-minute test is judged.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">FR-11 was read during discovery and then dropped from both spines</h3><span class="finding-location">EXPERIENCE.md § Component Patterns, Flow 3</span></header>
+            <div class="finding-note">"The item currently on screen plays to the end of its duration before the change takes effect" is a user-visible propagation rule. Flow 3 described propagation as immediate-then-confirmed, so an owner watching a wall after a bulk push sees a lag the spine never predicted.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Stated in the Playlist editor pattern and in Flow 3 step 5.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-open">open by decision</span><h3 class="finding-title">Flows 2–5 have no named protagonist</h3><span class="finding-location">EXPERIENCE.md § Key Flows</span></header>
+            <div class="finding-note">Disclosed and defended in each flow header. The discovery decision explicitly forbids inventing a protagonist where the sources supply none.</div>
+            <div class="finding-fix"><strong>Fix:</strong> None — a known deviation from the reference shape, not a defect. Closing it requires the product owner to narrate a real multi-branch session.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>2. Token completeness</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>All references resolved; nothing dangling in either direction. Every stated contrast ratio recomputed from sRGB relative luminance and found correct. The failures were tokens that did not exist for cases the prose committed to.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-critical">critical</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The Arabic type ramp was incomplete — Arabic headings would have rendered in a Latin family</h3><span class="finding-location">DESIGN.md § typography</span></header>
+            <div class="finding-note"><code>heading-ar</code> and <code>body-sm-ar</code> did not exist, while <code>heading</code> and <code>body-sm</code> hardcoded Inter — which has no Arabic coverage. <code>nav-item</code> and both holding cards resolve through <code>body-sm</code>, so an Arabic nav label would fall back to a host font: the exact failure FR-51/FR-52 and AD-23 exist to prevent, and precisely what success criterion 3 is judged on ("no fallback font").</div>
+            <div class="finding-fix"><strong>Fix:</strong> Both tiers added, plus a normative rule — every Latin tier has an <code>-ar</code> counterpart, and a Latin family never renders Arabic.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-critical">critical</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">There was no player type scale, and the two spines contradicted each other on player sizing</h3><span class="finding-location">DESIGN.md § typography / EXPERIENCE.md § Responsive</span></header>
+            <div class="finding-note">EXPERIENCE.md committed to <code>vmin</code> sizing; DESIGN.md contained zero <code>vmin</code> values and every tier in px. A 56px pairing code is 5.2% of viewport height at 1080p and 2.6% at 4K, where it is unreadable across a café. The player's holding cards, instructions and badge had no size tokens at all.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added <code>player-code</code>, <code>player-headline</code>, <code>player-body</code>, <code>player-label</code> and their <code>-ar</code> counterparts in <code>vmin</code>, a separate <code>code-console</code> tier for the console input, and a normative unit rule.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The focus ring was unusable on the product's loudest component</h3><span class="finding-location">DESIGN.md § components.focus-ring, banner-alarm</span></header>
+            <div class="finding-note">electric on alarm is <strong>2.00:1</strong>; electric-dark on alarm is <strong>1.03:1</strong>. The spine had also forbidden both obvious escapes ("never suppressed, never replaced by a background change"), and the banner's link colour was unspecified. Root cause: the rule that alarm and amber are theme-invariant colliding with electric being the one token that must shift.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added <code>on-signal</code> / <code>on-signal-companion</code> and a <code>focus-ring-on-signal</code> double ring at <code>outline-offset: 0</code> — the pair always clears 3:1 against any ground, which neither colour does alone. Links on signal fills are underlined at 2px, the one place this system accepts an underline.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The <code>-dark</code> suffix carried two incompatible meanings, and a naive resolver would invert a load-bearing decision</h3><span class="finding-location">DESIGN.md § components.holding-card-customer</span></header>
+            <div class="finding-note">In <code>colors</code>, <code>-dark</code> means "the dark-theme value". In the customer holding card it meant "literally near-black on a player that has no theme". Any consumer applying the obvious substitution either leaves the card unchanged by accident or flips it to white — on a public wall.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Introduced <code>player-neutral-ground</code> and <code>player-neutral-mark</code> as explicit non-theme tokens, and reserved <code>-dark</code> strictly for theme pairs.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">No component token declared its dark-mode resolution, so "both themes" was unverifiable from the artefact</h3><span class="finding-location">DESIGN.md § components.*</span></header>
+            <div class="finding-note">All 17 component objects referenced light tokens only. An implementer reading the frontmatter literally ships <code>#000000</code> text on <code>#0A0A0A</code>. Four dark tokens were referenced by nothing at all.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added a normative theme-substitution rule with its three theme-invariant exceptions enumerated — which is what surfaces the signal-surface problem above rather than hiding it.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The divider at 1.40:1 was the sole boundary between adjacent interactive rows, violating the spine's own rule</h3><span class="finding-location">DESIGN.md § Colors, components.screen-row</span></header>
+            <div class="finding-note">The spine states divider is "never the only thing distinguishing two interactive targets" — and then the console's primary unit, on the home surface, did exactly that, with the whole row as one link.</div>
+            <div class="finding-fix"><strong>Fix:</strong> The row's divider promotes to full-strength border on hover and focus-within — an inversion-consistent affordance in a system with no motion or radius. The <code>status-tag-live</code> border moved to <code>muted-foreground</code> (5.74:1) so the three-tag scale does not collapse for a low-vision user.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The trial badge had no colour, and contradicted the spine's own absolute on translucency</h3><span class="finding-location">DESIGN.md § components.trial-badge, Elevation &amp; Depth</span></header>
+            <div class="finding-note"><em>Elevation &amp; Depth</em> said "no translucency — absolute and no documented exception", and the component set <code>opacity: 0.3</code> two hundred lines later. It also had no foreground while compositing over arbitrary customer content, and <code>maxAreaRatio</code> is functionally a fixed-dimension text container.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Declared <strong>wordmark only</strong> — never plan or trial wording — so the logotype exemption applies and it carries no state; trial status is stated in the console in words. White at 0.3. The single translucency exception is now enumerated in <em>Elevation &amp; Depth</em> rather than left as a contradiction.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Two numeric slips and one over-broad absolute</h3><span class="finding-location">DESIGN.md § Colors, Typography</span></header>
+            <div class="finding-note">electric on near-black stated 2.5:1, actually 2.65:1. Dark-mode ink stated 21:1, actually 19.8:1. The label tier's "and by nothing else" was contradicted by five components that name their own foreground. <code>{spacing.rule}</code> was defined and referenced nowhere.</div>
+            <div class="finding-fix"><strong>Fix:</strong> All corrected; <code>{spacing.rule}</code> now referenced by every component border.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>3. Component coverage</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>Seven components were named as load-bearing in one spine and specified in neither's component section, and three had a token with no visual-spec row. Component naming also diverged between the two files in three places.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Seven load-bearing components were unspecified: skeleton, sheet, modal, notice, radio, upload progress, thumbnail</h3><span class="finding-location">both spines</span></header>
+            <div class="finding-note">Skeletons were the entire loading strategy with no token or dimensions; the sheet was the whole sub-640px navigation with no dismissal or focus behaviour; the modal carried every destructive confirmation with no Escape or focus-return rule; and the component that carries an optimistic-rollback failure was never specified anywhere.</div>
+            <div class="finding-fix"><strong>Fix:</strong> All seven added to both spines with visual and behavioural specs.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The trial badge had a visual spec and no behavioural spec, and FR-82 was absent from both spines</h3><span class="finding-location">EXPERIENCE.md § Component Patterns</span></header>
+            <div class="finding-note">"Branding is removed within one heartbeat cycle of payment being confirmed… the customer sees the result the same day they pay" is pure behaviour on a wall in front of paying customers, and was cited only inside a range.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Behavioural row added carrying FR-79 and FR-82 explicitly, and Flow 5 step 5 exercises it.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Component Patterns was prose, losing the surface column — which produced a real ambiguity about the alarm banner's scope</h3><span class="finding-location">EXPERIENCE.md § Component Patterns</span></header>
+            <div class="finding-note">The banner was "page-level" in one place and "any surface" in another. Two different answers to the same question.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Converted to a table with a Use column; the banner is now explicitly global, because the owner may arrive on any surface.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The same component carried two names across the pair, in three places</h3><span class="finding-location">both spines</span></header>
+            <div class="finding-note"><code>table-row</code> / "Screen row"; <code>meter</code> / "Storage meter"; <code>nav-item</code> / "Navigation". An extractor building an inventory from both files produces duplicates.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Unified — <code>screen-row</code>, <code>storage-meter</code>, <code>nav-item</code> — in frontmatter, prose and tables in both files.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The "Smart TV" status label named a hardware class, not the state it encodes — and was wrong for one of the three platforms</h3><span class="finding-location">EXPERIENCE.md § Component Patterns</span></header>
+            <div class="finding-note">Fire TV Silk runs on a stick, not a smart TV. It is also not a source term, and a screen-reader user hearing "Smart TV" gets no signal that anything is qualified — the amber fill that carries the caveat visually is exactly the channel assistive technology does not receive.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Relabelled <strong>"No auto-restart"</strong>, which names the disclosure, is plain language, and works in both scripts.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>4. State coverage</h2><span class="verdict-pill verdict-adequate">adequate</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>The individual state patterns were strong — several better than the reference examples, particularly partial-load honesty and stale-is-not-an-error — and permission-denied was correctly N/A with its reason. The gap was per-surface resolution: global defaults plus one concrete instance.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The architecture's <code>Provisioning</code> state was missing — which is the wall during Flow 1's climax</h3><span class="finding-location">EXPERIENCE.md § IA player states</span></header>
+            <div class="finding-note">AD-5 activates a revision only when fully cached, so there is a real, sometimes minutes-long window where the screen is paired, has a manifest, and cannot play. That window is Flow 1 between steps 6 and 7 — the fifteen-minute test, with Yusuf standing in front of the TV. Nothing said what is on the wall. <code>Reloading</code> and <code>Halted</code> were also absent, and FR-14 was cited nowhere.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added <em>Preparing</em> (owner register on first cache; customer register with the last frame held on mid-life re-cache) and <em>Dark</em> (<code>Halted</code>), plus an explicit statement that the UX table refines architecture's single <code>Holding</code> state into three registers.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">No surface specified console connection-loss behaviour</h3><span class="finding-location">EXPERIENCE.md § State Patterns</span></header>
+            <div class="finding-note">The player's offline story was excellent. But when the owner's own browser loses connectivity, the dashboard keeps displaying statuses derived from a <code>last_seen</code> it can no longer refresh — a dashboard showing "Live" while unable to reach the server is precisely the class of claim the Truth Contract exists to forbid.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added an all-surfaces console-offline row: a persistent notice stating that every status is as of the last successful fetch, with that time named.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">"Player states never fail visibly in any circumstance" is false, and the sources say so twice</h3><span class="finding-location">EXPERIENCE.md § State Patterns</span></header>
+            <div class="finding-note">On a best-effort device, process death is unrecoverable and the wall goes dark — PRD §4.3 and the architecture's <code>Halted</code> state. A dark screen is a blank screen. Stating an unachievable absolute is worse than stating the boundary.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Bounded to "in any circumstance the player is still running", with the boundary named and tied to what the caveat tag discloses in advance.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Per-surface empty, error and at-limit states were missing for nine of eleven surfaces</h3><span class="finding-location">EXPERIENCE.md § State Patterns</span></header>
+            <div class="finding-note">Only Screens was specified. A consumer had a principle and no strings — and Playlists-empty and Media-empty are both reachable inside Flow 1.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added a per-surface matrix covering all eleven console surfaces, with the prose defaults retained as a preamble.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>5. Visual reference coverage</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>At review time <code>mockups/</code> was linked three times and did not exist, and four of five working artifacts were orphans.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Three broken links in files marked <code>status: final</code></h3><span class="finding-location">both spines, footers</span></header>
+            <div class="finding-note">Both spines asserted that <code>mockups/</code> held the promoted key screens. A consumer finding no directory cannot tell whether the promotion step was skipped or the path is wrong.</div>
+            <div class="finding-fix"><strong>Fix:</strong> The five keeper artifacts were promoted to <code>mockups/</code>, and each is now linked inline at the section it illustrates, naming what it shows.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Four working artifacts were orphans, and the reason the chosen direction won existed nowhere in the spines</h3><span class="finding-location">.working/</span></header>
+            <div class="finding-note">The three rejected directions and their index were referenced by neither spine — including the finding that materially defends the choice: direction D needs no modern CSS, so it renders identically on the player's Chromium 76 floor, where the other three would each have needed a degraded variant.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Added <em>Inspiration &amp; Anti-patterns</em>, which records the rejected directions with their reasons, the rejected mechanisms, and the sources' first-hand competitor findings.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The only rendered reference contradicted the spine in five ways, all accessibility-relevant</h3><span class="finding-location">mockups/direction-signal.html</span></header>
+            <div class="finding-note">It used white on <code>#FF2D00</code> at 3.73:1 — the exact combination DESIGN.md names as failing — plus <code>ui-monospace</code>, Geeza Pro rather than Cairo, uppercase carrying the label tier, and <code>inset-inline-end</code> on the badge. The spines win on conflict, so not a governance failure, but it was the only artefact an implementer could see.</div>
+            <div class="finding-fix"><strong>Fix:</strong> The contrast failure was corrected in the file (black text, 2px underlined link). The four remaining deviations are disclosed in <em>Inspiration &amp; Anti-patterns</em> and the file is marked palette-and-layout reference only.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">"Spines win on conflict" was stated four times</h3><span class="finding-location">both spines</span></header>
+            <div class="finding-note">Repetition in a contract invites the reader to look for the version that differs.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Stated once, in DESIGN.md.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary><h2>6. Bloat &amp; overspecification</h2><span class="verdict-pill verdict-adequate">adequate</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>Both files were dense and mostly earned their length, with almost every paragraph tied to a decision. The problems were localised.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">A load-bearing decision was left uncommitted inside a file marked final</h3><span class="finding-location">DESIGN.md § Layout &amp; Spacing</span></header>
+            <div class="finding-note">The badge-by-alignment resolution — the entire answer to the FR-47-vs-Chromium-76 conflict — was hedged as "should be confirmed with architecture". A consumer could not tell whether to implement it. The rubric independently verified the claim is technically correct.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Committed ("this is committed, not proposed"), with the architecture question moved to a stated Open Item with an owner.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Five component paddings sat off the declared 4px scale, making the inheritance claim false</h3><span class="finding-location">DESIGN.md § components</span></header>
+            <div class="finding-note">9px, 13px, 7px, 18px and a 186px rail are not expressible on the inherited scale, so each becomes an arbitrary value in the implementation.</div>
+            <div class="finding-fix"><strong>Fix:</strong> All snapped; every component padding now resolves to a named spacing token, all multiples of 4.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The dashboard-only alerting risk was stated three times at length</h3><span class="finding-location">EXPERIENCE.md § Truth Contract, Flow 2</span></header>
+            <div class="finding-note">A genuine accepted-risk record that belongs in the spine once. Flow 2 exists specifically to dramatise it.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Cut to a two-sentence decision record in the Truth Contract plus the flow.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Version pins and editorial voice leaked where they did not belong</h3><span class="finding-location">both spines</span></header>
+            <div class="finding-note">Exact framework versions restated three times across two files are owned by the architecture spine and go stale; the Chromium floor is the UX-relevant constraint. EXPERIENCE.md also carried DESIGN.md's editorial register in three places.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Version pins dropped, floor and app names kept; the prose leaks removed.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>7. Inheritance discipline</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>Journey inheritance was exemplary and glossary discipline deliberate and good. The failure was a stack decision presented as inherited when this spine originated it.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The UI system was asserted as inherited stack and appears in no source</h3><span class="finding-location">both spines § Foundation</span></header>
+            <div class="finding-note">The architecture spine names no UI library, no Tailwind, no shadcn, no Radix and no token system — clean across all 427 lines. The discovery log knew this and said to flag it; neither spine did. Architecture is a named downstream consumer and would have read a stack decision as settled upstream, including a Radix dependency load-bearing for FR-47 mirroring and the accessibility floor.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Stated in both spines as a UX-originated claim with its rationale, and routed to architecture as an Open Item to accept or reject — with the consequence named: if rejected, every accessibility-floor item becomes hand-built work.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">A range citation silently resurrected a withdrawn requirement</h3><span class="finding-location">EXPERIENCE.md § IA</span></header>
+            <div class="finding-note">Schedules cited "FR-38–FR-44". FR-43 was withdrawn during architecture and its ID is retired, not reused.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Corrected to FR-38–FR-42, FR-44.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Player state names diverged from the architecture's state machine with no mapping</h3><span class="finding-location">EXPERIENCE.md § IA</span></header>
+            <div class="finding-note">The UX split of <code>Holding</code> into three register-bearing states is a genuine contribution — but unnamed as such it reads as a contradiction, and three architecture states simply vanished.</div>
+            <div class="finding-fix"><strong>Fix:</strong> The player state table now carries an explicit Architecture-state column and states that it refines <code>Holding</code> into three registers.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">Source paths were unresolvable from the file's own directory, and DESIGN.md had no <code>sources</code> at all</h3><span class="finding-location">both spines, frontmatter</span></header>
+            <div class="finding-note">DESIGN.md made ten source claims and one bare section reference with no sources list.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Both use the <code>{planning_artifacts}</code> placeholder form; DESIGN.md now carries the same list.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary><h2>8. Shape fit</h2><span class="verdict-pill verdict-adequate">adequate</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p>DESIGN.md's eight body sections were present in exact canonical order with nothing interleaved, and frontmatter carried every key the spec names. EXPERIENCE.md carried all eight required defaults with none dropped, and both invented sections earned their place. One triggered section was missing.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title"><em>Inspiration &amp; Anti-patterns</em> was triggered twice over and absent from both spines</h3><span class="finding-location">EXPERIENCE.md</span></header>
+            <div class="finding-note">The sources name reference products in detail — a first-hand trial-account inspection with six numbered findings, a twenty-product field table, and a direct instruction to "study this one closely". The discovery log adds four rendered directions with three rejected and the reason each lost. The spines carried exactly one unattributed trace of all of it.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Section added — lifted-from, rejected directions, rejected mechanisms — which also resolved the orphan-artifact finding.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">The two most-extracted sections were prose where the reference shape uses tables</h3><span class="finding-location">EXPERIENCE.md § Component Patterns, State Patterns</span></header>
+            <div class="finding-note">The prose form is what let per-surface state coverage go missing and what produced the alarm-banner scope ambiguity.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Both converted to tables, prose defaults retained as preambles.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details open>
+        <summary><h2>Accessibility review</h2><span class="reviewer-source">review-accessibility.md</span></summary>
+        <div class="dim-body"><div class="dim-judgment">
+          <p><strong>Verdict: not shippable against WCAG 2.2 AA as written — but the failures are concentrated, not systemic.</strong> The palette arithmetic is trustworthy and the premise survives scrutiny: "health is the absence of signal" does <em>not</em> fail 1.4.1, because every status tag carries a text label, and the alarm/amber pair separates by luminance so it survives protanopia and deuteranopia too. Roughly two-thirds of findings were specification gaps rather than design dead-ends — the spine repeatedly stated an accessible outcome without specifying the mechanism that makes it true or the thing that must be forbidden to keep it true.</p>
+          <p>The lens also corrected two of my own citations, both load-bearing: <strong>Focus Appearance is 2.4.13 (AAA)</strong> in published WCAG 2.2 while <strong>2.4.11 is Focus Not Obscured (AA)</strong> — so the focus failures bite through 1.4.11 and 2.4.7 and are <em>mandatory</em>, not aspirational; and <strong>2.5.8 asks 24px</strong>, so the spine's 44px floor is stricter than required rather than barely meeting it.</p>
+        </div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-critical">critical</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">C-1 — The alarm banner is the product's only alerting channel and was the least accessible object in the system</h3><span class="finding-location">DESIGN.md § banner-alarm, focus-ring</span></header>
+            <div class="finding-note">Every available treatment failed. An electric link is 2.00:1 on red. A black link passes contrast but is <em>visually identical to the surrounding banner text</em> — no underline, no colour, no weight — failing 1.4.1 by having no carrier at all, which is worse than the failure mode 1.4.1 was written for. The focus ring is 2.00:1 light and <strong>1.03:1 dark</strong>, where it is not rendered to the human eye. And with <code>section-gap: 0</code> plus a 2px offset, a ring on any element merely <em>abutting</em> the banner bleeds onto red — guaranteed, not incidental.</div>
+            <div class="finding-fix"><strong>Fix:</strong> <code>on-signal</code> double ring at zero offset; links on signal fills underlined at 2px; the banner declared static-flow rather than sticky.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-critical">critical</span><span class="badge badge-open">open — product owner</span><h3 class="finding-title">C-2 — The AA commitment was made on a surface the spine declines to specify, with the audit deferred past the Arabic launch</h3><span class="finding-location">EXPERIENCE.md § Bilingual Behaviour</span></header>
+            <div class="finding-note">Clerk hosted auth is step 1 of the only validated journey and mandatory for 100% of users. Conformance is not delegable — under EN 301 549 the service provider answers for embedded third-party components, and a WCAG claim covers <em>complete processes</em>. Unverified at the front door: <code>lang</code>/<code>dir</code> on the hosted page (if Clerk does not emit <code>lang="ar" dir="rtl"</code>, an Arabic screen-reader user gets Arabic spoken by a Latin voice engine — total failure, not degradation), contrast against Clerk's tinted greys, its focus ring, whether its email-code flow permits paste, reflow at 320px. As written, Arabic ships non-conformant at its entry point <em>by plan</em>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> The AA claim is now scoped to the two apps with authentication explicitly unverified, and the audit is recorded as an Open Item recommending a launch gate rather than a phase-3 revisit — because the outcome decides whether headless components are a phase-3 task or a phase-1 architectural commitment.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-critical">critical</span><span class="badge badge-open">open — product owner</span><h3 class="finding-title">C-3 — Owner-uploaded video plays full-screen on a public wall with no flash-safety gate</h3><span class="finding-location">EXPERIENCE.md § Media uploader</span></header>
+            <div class="finding-note">The uploader validates format, size and codec only. <strong>2.3.1 Three Flashes or Below Threshold is Level A</strong> and applies to user-generated content the service delivers. A café owner uploading a supplier's promo reel with a strobe cut can trigger a photosensitive seizure in a passer-by who never chose to look at the screen and cannot leave its field of view. The one finding here with a physical-harm and product-liability dimension rather than a usability one — and neither spine, the discovery log, nor any mock mentioned flashing anywhere.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Recorded as an Open Item requiring a v1 scope decision — at minimum a stated content policy plus warning-and-acknowledgement at upload for video; ideally luminance-flash analysis on ingest with rejection copy in the existing shape. Not silently adopted, because it changes scope.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">H-1 — The product had one live region and needed at least seven</h3><span class="finding-location">EXPERIENCE.md § Accessibility Floor</span></header>
+            <div class="finding-note">Every other dynamic status was silent to assistive technology: per-file upload progress and rejection, optimistic rollbacks the user did not initiate, the no-Publish-button propagation status (the flagship FR-37 moment), at-limit blocks, the schedule collision sentence, the bulk-assignment confirmation and its undo, and the partial-load statement. Each is a 4.1.3 failure.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One global <code>role="status"</code> announcer with <code>aria-atomic</code> and a documented politeness contract; <code>role="alert"</code> reserved for rollback alone; and a rule that every state in the matrix names its announcement channel.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">H-2 — "No signal" was indistinguishable from "not yet loaded", on a product whose thesis is that silence means verified-healthy</h3><span class="finding-location">EXPERIENCE.md § State Patterns</span></header>
+            <div class="finding-note">Sighted users were fine. But with skeletons textless, nothing animating, and no <code>aria-busy</code> anywhere, the three quiet states — loaded-and-healthy, still-loading, loaded-but-partial — collapsed into the same silence for a screen-reader user. The premise is only safe if absence is reliably distinguishable from absence of data, and it was not.</div>
+            <div class="finding-fix"><strong>Fix:</strong> <code>aria-busy</code> on loading regions with a polite loaded/loading pair, and the row's accessible name now <em>asserts</em> health — "Live, confirmed just now" — converting an absence into a statement at zero visual cost. Visual health stays silent; the accessibility tree does not.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-open">partly open — product owner</span><h3 class="finding-title">H-3 — The pairing code is a cognitive-function test with paste explicitly forbidden and an unspecified alphabet</h3><span class="finding-location">EXPERIENCE.md § Pairing code input</span></header>
+            <div class="finding-note">Device pairing authenticates a player into the workspace, so <strong>3.3.8 Accessible Authentication (AA)</strong> applies. The usual escape hatch for one-time codes is that they can be pasted — closed here by design decision, with no alternative path, since this is "the only path a screen enters the workspace". Nothing excluded <code>0/O</code>, <code>1/I/l</code>, <code>5/S</code>, <code>2/Z</code>, <code>8/B</code>, and Inter's zero is undotted. Six glyphs at 56px also overflow both the spine's own 390px constraint and 1.4.10's 320px.</div>
+            <div class="finding-fix"><strong>Fix applied:</strong> alphabet restricted to an unambiguous set and stated next to the token; the code tier split so the console input has its own smaller size. <strong>Open:</strong> the non-transcription alternative — a QR on the player deep-linking a pre-filled pairing URL — removes the cognitive test entirely and <em>shortens</em> Yusuf's path, but it is a new player surface and a scope addition.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">H-4 — The screen row had no interactive affordance and an accessible name that collided with the no-concatenation rule</h3><span class="finding-location">EXPERIENCE.md § Screen row</span></header>
+            <div class="finding-note">Row text is black and grey, not electric; no underline; radius, shadow and transition are all zero so there is no hover or press affordance to fall back on; and the only boundary between one 48px link and the next was a 1.398:1 divider — violating DESIGN.md's own rule. Separately, folding four columns into "a single accessible name" is by definition the sentence assembly AD-22 forbids, and the spine did not say which rule bends.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Divider promotes to full-strength border on hover and focus-within; the accessible name is specified as one ICU entry with four named slots, so both rules hold.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">H-5 — No bypass mechanism, on a product where two persistent blocks precede every page's content</h3><span class="finding-location">EXPERIENCE.md § Accessibility Floor</span></header>
+            <div class="finding-note">A keyboard user meets a persistent nav rail and, whenever any screen is offline, a full-bleed non-dismissible banner containing a link, positioned first. No skip link, no landmarks, no roles specified anywhere. <strong>2.4.1 is Level A.</strong> Note the lens also cleared the accepted risk: <strong>2.2.4 Interruptions is AAA</strong>, so non-dismissibility is not an AA failure and the product owner's decision stands.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Skip-to-content link plus a landmark map, and the banner given <code>role="region"</code> with an accessible name so it can be navigated <em>to</em> deliberately as well as past.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">M-3 / M-4 / M-6 / M-7 — Four specification gaps behind stated outcomes</h3><span class="finding-location">multiple</span></header>
+            <div class="finding-note">The 2px focus offset had nowhere to go in a zero-gap full-bleed system, and banner stickiness was never stated (2.4.11). "Tab order via DOM order" forbade a <code>tabindex</code> map but not <code>order</code>, <code>row-reverse</code>, <code>grid-template-areas</code>, or explicit grid placement — and the 640–1023px column-wrap rule is exactly where the obvious implementation breaks it. The customer holding card's only visible object was 1.379:1, reading as a dead television — the precise embarrassment the two-register decision exists to avoid. And the ICU bidi contract, if realised with Unicode control characters, injects them into live-region text.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Zero-offset double ring at boundaries and banner declared static; a lintable structural prohibition replacing the asserted outcome; the mark raised to 3.61:1 and sized in <code>vmin</code>; isolation specified as markup with <code>aria-atomic</code> on the announcer.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><span class="badge badge-fixed">fixed</span><h3 class="finding-title">L-3 / L-4 / L-6 — Three unreachable or unstated guarantees</h3><span class="finding-location">multiple</span></header>
+            <div class="finding-note">Honouring <code>prefers-reduced-motion</code> was correct and practically unreachable: the player takes nothing from its device, and a Tizen TV's audience of passers-by can set no OS preference. Meanwhile playlist auto-advance is auto-updating content over 5 seconds with no pause control — <strong>2.2.2 is Level A</strong> — resting entirely on the "essential" exception, which is defensible for signage but was never written down. And 1.4.12 grants no Arabic exception to the zero-tracking rule, a tension nobody should "fix" by clamping Arabic containers.</div>
+            <div class="finding-fix"><strong>Fix:</strong> A <code>reducedMotion</code> flag carried in the manifest and set per screen from the console — the same channel as locale, and the only reachable one; the 2.2.2 essential-exception claim recorded as a decision; the 1.4.12 tension noted with the <code>min-block-size</code> rule that satisfies its clipping half.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li><strong>All three Chromium 76 capability claims verified correct.</strong> <code>inset-inline-*</code> is Chrome 87 and unavailable; <code>justify-items</code>/<code>align-items</code> flow-relative values are Chrome 57 and available — and <code>align-items</code> being block-axis is <em>desirable</em> for a corner badge, since bottom stays bottom while the inline edge mirrors. <code>clamp()</code>, flexbox <code>gap</code>, <code>aspect-ratio</code>, <code>:has()</code>, container queries, <code>oklch</code>, <code>color-mix</code> all unavailable. <code>vmin</code> and compositor-driven opacity transitions available.</li>
+        <li><strong>A fourth instance of the same bug class, caught by the rubric:</strong> the logical border <em>shorthands</em> (<code>border-inline-start</code>, <code>border-block-end</code>) shipped in Chrome 87 — the same batch as the insets the spine correctly flagged. Longhands are Chrome 69 and safe. Fixed: component tokens moved to longhand form, shorthands added to the ban list. The spine's precision in banning <em>flexbox</em> gap specifically is also correct and should not be "simplified" later — grid gap is Chrome 66 and the badge grid needs it.</li>
+        <li><strong>The discovery log contained a wrong decision that both spines had silently corrected:</strong> a record that electric <code>#0F2BFF</code> cannot serve as AA text on white. It is 7.474:1 and passes at every size. A correction entry has been appended, since a stale decision record is what gets re-litigated during implementation.</li>
+        <li>Both files parse as valid YAML and carry every frontmatter key their specs name. DESIGN.md's <code>description</code> was three sentences where the spec says one line — shortened.</li>
+        <li>Zero unresolved <code>{path.to.token}</code> references across both files, before and after the fixes. Fourteen orphan tokens at review time; the four <code>-dark</code> orphans were symptoms of the missing theme-substitution rule and are now load-bearing.</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: review-rubric.md</span>
+        <span>Accessibility: review-accessibility.md</span>
+        <span>Generated: 2026-08-11</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

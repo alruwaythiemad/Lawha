@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+@config '../tailwind.config.ts';
+
+@import './generated/tokens.css';
+/* layer(components): generated/typography.css is unlayered CSS, which in
+   Tailwind v4's cascade-layer model always outranks any @layer utilities
+   rule regardless of source order — without this, a Tailwind utility like
+   font-extrabold could never win over a .type-* class's font-weight (Task 2
+   needs exactly that for {components.nav-item-active}). Scoping it under
+   'components' keeps it below Tailwind's 'utilities' layer. */
+@import './generated/typography.css' layer(components);
+
+/* tw-animate-css: provides the animate-in/out + slide/fade utilities the
+   shadcn Sheet (Task 1) uses for its open/close transition. shadcn/tailwind.css
+   provides the data-open/data-closed custom variants those utilities key off
+   of. Neither carries colour/radius/spacing values of its own. */
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/* shadcn/Radix components (components/ui/*) address colour/radius by the
+ * semantic names below (--color-popover, --color-ring, --radius-md, etc.).
+ * Our own theme (tailwind.config.ts, from packages/tokens) doesn't define
+ * those names — it defines background/foreground/border/electric/... — so
+ * this block exists purely to *alias* the shadcn names shadcn components
+ * expect onto the project's existing generated/tokens.css variables. It
+ * introduces no new colour, radius, or spacing value of its own, and there
+ * is deliberately no `.dark` class or `--font-sans` here: this project's
+ * theme is switched via the `[data-theme="dark"]` attribute already
+ * handled by generated/tokens.css (Task 4 sets it on <html>), and every
+ * component sets its typeface via the `type-*` classes in
+ * generated/typography.css, not a Tailwind font utility.
+ */
+@theme inline {
+  --color-popover: var(--color-background);
+  --color-popover-foreground: var(--color-foreground);
+  --color-muted: var(--color-background);
+  --color-accent: var(--color-background);
+  --color-accent-foreground: var(--color-foreground);
+  --color-secondary: var(--color-background);
+  --color-secondary-foreground: var(--color-foreground);
+  --color-primary: var(--color-electric);
+  --color-primary-foreground: var(--color-electric-foreground);
+  --color-destructive: var(--color-alarm);
+  --color-ring: var(--color-electric);
+
+  --radius: var(--rounded-DEFAULT);
+  --radius-sm: var(--rounded-DEFAULT);
+  --radius-md: var(--rounded-DEFAULT);
+  --radius-lg: var(--rounded-DEFAULT);
+  --radius-xl: var(--rounded-DEFAULT);
+  --radius-2xl: var(--rounded-DEFAULT);
+  --radius-3xl: var(--rounded-DEFAULT);
+  --radius-4xl: var(--rounded-DEFAULT);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

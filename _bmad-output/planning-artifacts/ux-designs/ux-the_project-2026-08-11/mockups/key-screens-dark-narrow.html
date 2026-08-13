@@ -1,0 +1,157 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Key screen: Screens, dark mode and narrow</title>
+<style>
+/* ── KEY SCREEN: SCREENS — DARK, AND < 640px ─────────────────────────
+   Governed by:
+     DESIGN.md > Colors — dark mode is INVERSION, not a re-tune. border-dark
+       is white; alarm #FF2D00 and amber #FFB800 are UNCHANGED between modes,
+       because a signal that shifts hue by theme must be re-learned. Only
+       electric shifts: #0F2BFF -> #5C7CFF (2.5:1 on near-black is unreadable).
+     DESIGN.md > Layout & Spacing — below 640px regions run FULL-BLEED to the
+       viewport edge with no inline margin. Zero radius is what makes this work.
+     EXPERIENCE.md > Responsive & Platform — "< 640px: rows become stacked
+       blocks. Table columns reflow to a two-line block; NOTHING is dropped,
+       because a hidden last-confirmed time would break the truth contract."
+     EXPERIENCE.md > The Truth Contract, rules 1-4
+     EXPERIENCE.md > Component Patterns > Screen row / Status tag / Alarm banner
+   Tokens: background-dark #0A0A0A · foreground-dark #FFFFFF
+           muted-foreground-dark #999999 · border-dark #FFFFFF
+           divider-dark #2A2A2A · electric-dark #5C7CFF
+           alarm #FF2D00 (fg #000) · amber #FFB800 (fg #000)
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1C1C1C;color:#fff;font:500 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:36px 20px;-webkit-font-smoothing:antialiased}
+.page{max-width:1180px;margin:0 auto}
+.note{background:#fff;color:#000;padding:20px 24px;margin-bottom:26px;font-size:14px;line-height:1.6;max-width:80ch}
+.note b{font-weight:800}
+.cap{font:800 10px/1.4 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#999;margin:30px 0 9px}
+.row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+
+/* ── dark, wide ── */
+.frame{background:#0A0A0A;border:1px solid #fff;flex:1;min-width:520px}
+.chrome{border-bottom:1px solid #fff;padding:8px 12px;display:flex;gap:6px;align-items:center}
+.d{width:8px;height:8px;border:1px solid #fff}
+.url{margin-inline-start:11px;font-size:11px;color:#999}
+.app{display:grid;grid-template-columns:186px 1fr;min-height:430px}
+.nav{border-inline-end:1px solid #fff;padding:18px 0}
+.brand{font:800 20px/1 -apple-system,sans-serif;letter-spacing:-.03em;text-transform:uppercase;padding:0 18px 20px}
+.nav a{display:block;padding:9px 18px;color:#fff;text-decoration:none;font:500 13px/1 -apple-system,sans-serif;text-transform:uppercase;letter-spacing:.05em;min-height:44px;display:flex;align-items:center}
+.nav a.on{background:#fff;color:#0A0A0A;font-weight:800}
+.meter{margin:20px 18px 0;padding-top:16px;border-top:1px solid #fff;font:800 10px/1.6 -apple-system,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#999}
+.bar{height:8px;border:1px solid #fff;margin:8px 0 6px}
+.bar i{display:block;height:6px;background:#fff;width:34%}
+.tn{font-variant-numeric:tabular-nums;letter-spacing:0;text-transform:none;font-weight:500}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #fff}
+.toolbar h2{font:800 24px/1 -apple-system,sans-serif;letter-spacing:-.035em;text-transform:uppercase}
+.btn{background:#5C7CFF;color:#000;border:0;padding:10px 16px;font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;min-height:44px;cursor:pointer}
+/* alarm is UNCHANGED in dark mode — same #FF2D00, same black text */
+.strip{background:#FF2D00;color:#000;padding:13px 20px;font-size:13.5px;font-weight:500}
+.strip b{font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.strip a{color:#000;font-weight:800}
+.gh{display:flex;align-items:center;padding:10px 20px;border-bottom:1px solid #fff;font:800 10px/1 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.gh .h{margin-inline-start:auto;font-weight:500;letter-spacing:.06em;color:#999}
+.tr{display:grid;grid-template-columns:1.4fr 1.3fr 96px 84px;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid #2A2A2A;min-height:48px}
+.nm{font-weight:700;font-size:15px;letter-spacing:-.012em}
+.pl{color:#999;font-size:13.5px}
+.tm{font-size:12px;color:#999;font-variant-numeric:tabular-nums}
+.tag{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:5px 7px;text-align:center}
+.tag.live{border:1px solid #999;color:#fff}
+.tag.off{background:#FF2D00;color:#000}
+.tag.tv{background:#FFB800;color:#000}
+.tr.off{border-top:1px solid #fff;border-bottom:1px solid #fff}
+.detail{grid-column:1/-1;font-size:13.5px;line-height:1.5;padding-top:9px;max-width:66ch;color:#fff}
+.focusdemo{outline:2px solid #5C7CFF;outline-offset:2px}
+
+/* ── narrow, 390px, dark ── */
+.vp{width:390px;background:#0A0A0A;border:1px solid #fff;flex:0 0 auto}
+.vtop{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #fff;min-height:52px}
+.vtop h2{font:800 20px/1 -apple-system,sans-serif;letter-spacing:-.03em;text-transform:uppercase}
+.burger{width:44px;min-height:44px;border:1px solid #fff;background:transparent;color:#fff;font-size:15px;font-weight:800;cursor:pointer}
+/* full-bleed: no inline margin at all. zero radius makes this free. */
+.blk{border-bottom:1px solid #2A2A2A;padding:14px 16px}
+.blk .l1{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.blk .l2{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:7px}
+.blk.off{border-top:1px solid #fff;border-bottom:1px solid #fff}
+.blk .det{font-size:13px;line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px solid #2A2A2A}
+.ghn{padding:9px 16px;border-bottom:1px solid #fff;font:800 10px/1.5 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.ghn span{display:block;font-weight:500;letter-spacing:.04em;color:#999;margin-top:3px}
+.why{font-size:12.5px;color:#999;margin-top:12px;line-height:1.55;max-width:44ch}
+</style>
+
+<div class="page">
+  <div class="note">
+    <b>Dark mode required no palette re-tuning</b> — with no shadows, gradients, or tints to translate, it is inversion. Borders go white, the two signal colours stay exactly as they are, and only <code>electric</code> shifts to <code>#5C7CFF</code>, because <code>#0F2BFF</code> on near-black is 2.5:1 and unreadable. A signal that changes hue by theme is a signal the owner has to learn twice.
+    <br><br><b>Below 640px, the system gets more edge-to-edge, not less.</b> Rows become stacked blocks running to the viewport edge with zero inline margin — which only looks intentional because nothing has a radius. And <b>no column is dropped</b>: hiding the last-confirmed time to save space would break the truth contract, so it reflows to a second line instead.
+  </div>
+
+  <div class="cap">Screens — dark · ≥1024px · one screen offline, one best-effort device</div>
+  <div class="row">
+    <div class="frame">
+      <div class="chrome"><span class="d"></span><span class="d"></span><span class="d"></span><span class="url">lawha.app/screens</span></div>
+      <div class="app">
+        <nav class="nav">
+          <div class="brand">Lawha</div>
+          <a href="#" class="on">Screens</a>
+          <a href="#">Media</a>
+          <a href="#">Playlists</a>
+          <a href="#">Schedules</a>
+          <a href="#">Branches</a>
+          <a href="#">Billing</a>
+          <div class="meter">Storage<div class="bar"><i></i></div><span class="tn">1.7 / 5 GB</span></div>
+        </nav>
+        <div>
+          <div class="toolbar"><h2>Screens</h2><button class="btn focusdemo">Add a screen</button></div>
+          <div class="strip"><b>1 screen offline</b> — Back Wall stopped reporting at 09:14. What's on that wall is unconfirmed. <a href="#">What to check</a></div>
+          <div class="gh">Main branch <span class="h">2 online / 1 offline</span></div>
+          <div class="tr"><span class="nm">Front Counter</span><span class="pl">Lunch Menu</span><span class="tm">now</span><span class="tag live">Live</span></div>
+          <div class="tr"><span class="nm">Window Display</span><span class="pl">Weekend Offers</span><span class="tm">now</span><span class="tag live">Live</span></div>
+          <div class="tr off">
+            <span class="nm">Back Wall</span><span class="pl">Lunch Menu — last known</span><span class="tm">09:14</span><span class="tag off">Offline</span>
+            <div class="detail">Offline since 09:14 today. Check power and Wi-Fi at the screen. Playback resumes by itself once it reconnects — nothing to rebuild.</div>
+          </div>
+          <div class="gh">Al Hamra branch <span class="h">2 online</span></div>
+          <div class="tr"><span class="nm">Entrance</span><span class="pl">Weekend Offers</span><span class="tm">now</span><span class="tag live">Live</span></div>
+          <div class="tr">
+            <span class="nm">Drive-Thru Menu</span><span class="pl">Lunch Menu</span><span class="tm">now</span><span class="tag tv">Smart TV</span>
+            <div class="detail">Lawha cannot restart this screen after a power cut. It will stay dark until someone turns it back on.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap" style="margin-top:0">&lt; 640px · full-bleed stacked blocks</div>
+      <div class="vp">
+        <div class="vtop"><h2>Screens</h2><button class="burger">≡</button></div>
+        <div class="strip"><b>1 offline</b> — Back Wall stopped reporting at 09:14. <a href="#">What to check</a></div>
+        <div class="ghn">Main branch <span>2 online / 1 offline</span></div>
+        <div class="blk">
+          <div class="l1"><span class="nm">Front Counter</span><span class="tag live">Live</span></div>
+          <div class="l2"><span class="pl">Lunch Menu</span><span class="tm">now</span></div>
+        </div>
+        <div class="blk">
+          <div class="l1"><span class="nm">Window Display</span><span class="tag live">Live</span></div>
+          <div class="l2"><span class="pl">Weekend Offers</span><span class="tm">now</span></div>
+        </div>
+        <div class="blk off">
+          <div class="l1"><span class="nm">Back Wall</span><span class="tag off">Offline</span></div>
+          <div class="l2"><span class="pl">Lunch Menu — last known</span><span class="tm">09:14</span></div>
+          <div class="det">Offline since 09:14 today. Check power and Wi-Fi at the screen. Playback resumes by itself once it reconnects.</div>
+        </div>
+        <div class="ghn">Al Hamra branch <span>2 online</span></div>
+        <div class="blk">
+          <div class="l1"><span class="nm">Entrance</span><span class="tag live">Live</span></div>
+          <div class="l2"><span class="pl">Weekend Offers</span><span class="tm">now</span></div>
+        </div>
+        <div class="blk">
+          <div class="l1"><span class="nm">Drive-Thru Menu</span><span class="tag tv">Smart TV</span></div>
+          <div class="l2"><span class="pl">Lunch Menu</span><span class="tm">now</span></div>
+          <div class="det">Lawha cannot restart this screen after a power cut. It will stay dark until someone turns it back on.</div>
+        </div>
+      </div>
+      <p class="why">Every column survives the collapse: status becomes a tag on line one, playlist and last-confirmed time share line two. The alarm strip shortens its summary but keeps the time and the action.</p>
+    </div>
+  </div>
+</div>

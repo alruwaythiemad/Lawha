@@ -1,0 +1,19 @@
+{
+  "name": "lawha",
+  "private": true,
+  "packageManager": "pnpm@10.11.1",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "build": "pnpm -r --if-present run build",
+    "test": "pnpm -r --if-present run test",
+    "verify:tier-isolation": "tsx scripts/verify-tier-isolation.ts"
+  },
+  "devDependencies": {
+    "tsx": "catalog:",
+    "@lawha/tokens": "workspace:*"
+  }
+}

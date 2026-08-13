@@ -1,0 +1,193 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Direction B: Console</title>
+<style>
+/* ── DIRECTION B: "CONSOLE" ──────────────────────────────────────────
+   Palette (documented for DESIGN.md extraction):
+     ground     #FFFFFF   page
+     surface    #FAFAFA   subtle panel fill
+     border     #E8E8ED   1px, used liberally — structure is visible
+     ink        #16161A   primary text
+     muted      #75757F   metadata
+     ok         #16A34A   confirmed online (a 5px dot, nothing more)
+     warn       #B45309   caveat / device tier
+     alarm      #DC2626   offline
+     link       #2563EB   the only interactive colour
+   Radius: 6px controls, 8px panels. Elevation: one 1px border, no shadows
+   except a 0 1px 2px on menus. Density is the point — 40px rows.
+   Intended type: Inter / Geist at 13px with tabular numerals.
+   Arabic: IBM Plex Sans Arabic — same optical size, tabular digits kept LTR.
+   Motion implication: fast and mechanical — 120ms, ease-out, no bounce.
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F4F4F6;color:#16161A;font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:40px 24px;-webkit-font-smoothing:antialiased}
+.page{max-width:1080px;margin:0 auto}
+.rationale{background:#16161A;color:#E8E8ED;padding:26px 30px;border-radius:8px;margin-bottom:30px}
+.rationale h1{font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;margin-bottom:12px;color:#75757F}
+.rationale p{max-width:66ch;font-size:14px;line-height:1.6}
+.rationale p+p{margin-top:9px}
+.caption{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#75757F;margin:32px 0 9px}
+
+.frame{background:#FFF;border:1px solid #E8E8ED;border-radius:8px;overflow:hidden}
+.chrome{border-bottom:1px solid #E8E8ED;padding:8px 12px;display:flex;align-items:center;gap:6px;background:#FAFAFA}
+.dot{width:8px;height:8px;border-radius:50%;background:#E0E0E6}
+.url{margin-inline-start:10px;font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#9A9AA4}
+
+.app{display:grid;grid-template-columns:172px 1fr;min-height:470px}
+.nav{border-inline-end:1px solid #E8E8ED;background:#FAFAFA;padding:12px 8px}
+.brand{font-size:14px;font-weight:600;letter-spacing:-.01em;padding:6px 10px 14px}
+.nav a{display:block;padding:6px 10px;color:#55555F;text-decoration:none;border-radius:6px;margin-bottom:1px}
+.nav a.on{background:#EDEDF1;color:#16161A;font-weight:500}
+.meter{margin:16px 10px 0;padding-top:14px;border-top:1px solid #E8E8ED;font-size:11px;color:#9A9AA4}
+.bar{height:4px;background:#E8E8ED;border-radius:2px;margin:6px 0 5px}
+.bar i{display:block;height:4px;border-radius:2px;background:#75757F;width:34%}
+
+.main{padding:0}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #E8E8ED}
+.toolbar h2{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.tools{display:flex;gap:7px;align-items:center}
+.chip{border:1px solid #E8E8ED;border-radius:6px;padding:4px 9px;font-size:12px;color:#55555F;background:#FFF}
+.chip.on{background:#16161A;border-color:#16161A;color:#FFF}
+.btn{background:#16161A;color:#FFF;border:0;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer}
+
+/* banner — the escalation surface. calm normal means this is usually absent. */
+.banner{display:flex;gap:10px;align-items:flex-start;padding:11px 18px;background:#FEF6F6;border-bottom:1px solid #F3D3D3;color:#7F1D1D;font-size:12.5px}
+.banner b{font-weight:600}
+.banner a{color:#7F1D1D;font-weight:500}
+
+.grouphead{display:flex;align-items:center;gap:10px;padding:9px 18px;background:#FAFAFA;border-bottom:1px solid #E8E8ED;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#75757F}
+.grouphead .health{margin-inline-start:auto;font-size:11px;letter-spacing:0;text-transform:none;font-weight:400;color:#75757F;font-variant-numeric:tabular-nums}
+.tr{display:grid;grid-template-columns:22px 1.5fr 1.4fr 88px 22px;gap:12px;align-items:center;padding:0 18px;height:40px;border-bottom:1px solid #F1F1F4}
+.tr:hover{background:#FAFAFA}
+.sdot{width:6px;height:6px;border-radius:50%;background:#16A34A;justify-self:center}
+.sdot.off{background:#DC2626}
+.sdot.warn{background:#B45309}
+.nm{font-weight:500}
+.pl{color:#55555F}
+.tm{font-size:12px;color:#9A9AA4;font-variant-numeric:tabular-nums;text-align:end}
+.kebab{color:#C4C4CC;justify-self:center}
+/* escalated row expands inline — full sentence, not a tooltip */
+.tr.off{background:#FEFAFA;border-bottom-color:#F3D3D3}
+.tr.off .nm{color:#B91C1C}
+.detail{grid-column:1/-1;padding:0 18px 12px;font-size:12.5px;color:#B91C1C;background:#FEFAFA;border-bottom:1px solid #F3D3D3;margin:0 -18px;padding-inline-start:52px}
+.detail.mute{color:#8A6D3B;background:#FFFBF3;border-bottom-color:#F0E2C4}
+
+.rtl{direction:rtl}
+.rtl .tm{text-align:end}
+.ar{font-family:"Geeza Pro","Noto Naskh Arabic",-apple-system,sans-serif}
+.num{direction:ltr;unicode-bidi:isolate;display:inline-block}
+
+.empty{padding:64px 20px;text-align:center}
+.empty h3{font-size:16px;font-weight:600;margin-bottom:7px}
+.empty p{color:#75757F;max-width:48ch;margin:0 auto 18px;font-size:13px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tv{aspect-ratio:16/9;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7%;border-radius:8px}
+.tv.owner{background:#FFF;border:1px solid #E8E8ED}
+.pill{border:1px solid #E8E8ED;border-radius:999px;padding:3px 10px;font-size:11px;color:#75757F;margin-bottom:14px}
+.code{font:600 46px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;margin-bottom:12px}
+.hint{font-size:12.5px;color:#75757F;max-width:36ch}
+.tv.cust{background:#121214;border:1px solid #121214}
+.tv.cust .mark{width:30px;height:30px;border-radius:7px;background:#26262B}
+.badge{position:absolute;inset-block-end:4%;inset-inline-end:4%;font-size:10px;font-weight:500;color:#16161A;opacity:.32}
+.tvlabel{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#75757F;margin-bottom:7px}
+</style>
+
+<div class="page">
+  <div class="rationale">
+    <h1>Direction B — “Console”</h1>
+    <p>Minimal as <em>precision instrument</em>. Dense 40px rows, 13px type, tabular numerals, visible 1px structure — the aesthetic of Linear and Vercel rather than of print. Nothing decorative, but nothing hidden either.</p>
+    <p>Calm-until-it-matters is carried by a 6px status dot and an escalation that expands the row inline into a full sentence. Degraded rows also tint their background, and a page-level banner appears above the table.</p>
+    <p>Best fit for the multi-branch owner scanning forty screens. The single-screen café owner may find it reads as software for someone more technical than them.</p>
+  </div>
+
+  <div class="caption">Hero — Screens, English</div>
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">Lawha</div>
+        <a href="#" class="on">Screens</a>
+        <a href="#">Media</a>
+        <a href="#">Playlists</a>
+        <a href="#">Schedules</a>
+        <a href="#">Branches</a>
+        <a href="#">Billing</a>
+        <div class="meter">Storage<div class="bar"><i></i></div>1.7 of 5 GB used</div>
+      </nav>
+      <div class="main">
+        <div class="toolbar">
+          <h2>Screens</h2>
+          <div class="tools">
+            <span class="chip on">All branches</span>
+            <span class="chip">Needs attention · 1</span>
+            <button class="btn">Add a screen</button>
+          </div>
+        </div>
+        <div class="banner"><span>▲</span><div><b>Back Wall has been offline since 09:14.</b> What the wall is showing is unconfirmed. <a href="#">See what to check →</a></div></div>
+
+        <div class="grouphead">Main branch <span class="health">2 online · 1 offline</span></div>
+        <div class="tr"><span class="sdot"></span><span class="nm">Front Counter</span><span class="pl">Lunch Menu</span><span class="tm">now</span><span class="kebab">⋯</span></div>
+        <div class="tr"><span class="sdot"></span><span class="nm">Window Display</span><span class="pl">Weekend Offers</span><span class="tm">now</span><span class="kebab">⋯</span></div>
+        <div class="tr off"><span class="sdot off"></span><span class="nm">Back Wall</span><span class="pl">Lunch Menu · last known</span><span class="tm">09:14</span><span class="kebab">⋯</span></div>
+        <div class="detail">Offline since 09:14 today. Check the screen's power and Wi-Fi — playback resumes on its own once it reconnects.</div>
+
+        <div class="grouphead">Al Hamra branch <span class="health">2 online</span></div>
+        <div class="tr"><span class="sdot"></span><span class="nm">Entrance</span><span class="pl">Weekend Offers</span><span class="tm">now</span><span class="kebab">⋯</span></div>
+        <div class="tr"><span class="sdot warn"></span><span class="nm">Drive-Thru Menu</span><span class="pl">Lunch Menu</span><span class="tm">now</span><span class="kebab">⋯</span></div>
+        <div class="detail mute">Smart TV — Lawha can't restart this one after a power cut. It will stay dark until someone turns it back on.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Same screen, Arabic — RTL mirror. Digits and clock times stay LTR inside bidi isolation (FR-50).</div>
+  <div class="frame rtl ar">
+    <div class="chrome" dir="ltr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/ar/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">لوحة</div>
+        <a href="#" class="on">الشاشات</a>
+        <a href="#">الوسائط</a>
+        <a href="#">قوائم التشغيل</a>
+        <a href="#">المواعيد</a>
+        <a href="#">الفروع</a>
+        <a href="#">الفواتير</a>
+        <div class="meter">مساحة التخزين<div class="bar"><i></i></div>مُستخدَم <span class="num">1.7 / 5 GB</span></div>
+      </nav>
+      <div class="main">
+        <div class="toolbar"><h2>الشاشات</h2><div class="tools"><span class="chip on">جميع الفروع</span><button class="btn">إضافة شاشة</button></div></div>
+        <div class="banner"><span>▲</span><div><b>شاشة الحائط الخلفي غير متصلة منذ <span class="num">9:14</span>.</b> ما يظهر على الشاشة الآن غير مؤكد. <a href="#">← ما الذي يجب فحصه</a></div></div>
+        <div class="grouphead">الفرع الرئيسي <span class="health">متصلة <span class="num">2</span> · غير متصلة <span class="num">1</span></span></div>
+        <div class="tr"><span class="sdot"></span><span class="nm">شاشة الكاشير</span><span class="pl">قائمة الغداء</span><span class="tm">الآن</span><span class="kebab">⋯</span></div>
+        <div class="tr off"><span class="sdot off"></span><span class="nm">شاشة الحائط الخلفي</span><span class="pl">قائمة الغداء · آخر ما تم تأكيده</span><span class="tm"><span class="num">09:14</span></span><span class="kebab">⋯</span></div>
+        <div class="detail">غير متصلة منذ الساعة <span class="num">9:14</span> صباح اليوم. تحقّق من الكهرباء والاتصال — سيستأنف العرض تلقائيًا عند إعادة الاتصال.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Empty state</div>
+  <div class="frame">
+    <div class="empty">
+      <h3>No screens paired yet</h3>
+      <p>Open Lawha on your TV. It shows a six-character code — enter it here and the screen is yours.</p>
+      <button class="btn">Enter pairing code</button>
+    </div>
+  </div>
+
+  <div class="caption">Player, two registers</div>
+  <div class="grid2">
+    <div>
+      <div class="tvlabel">Owner register — pairing</div>
+      <div class="tv owner">
+        <div class="pill">Waiting to be paired</div>
+        <div class="code">7K2QF9</div>
+        <div class="hint">Enter this code in Lawha under Screens.</div>
+        <div class="badge">Lawha</div>
+      </div>
+    </div>
+    <div>
+      <div class="tvlabel">Customer register — stopped (FR-63b)</div>
+      <div class="tv cust"><div class="mark"></div></div>
+    </div>
+  </div>
+</div>

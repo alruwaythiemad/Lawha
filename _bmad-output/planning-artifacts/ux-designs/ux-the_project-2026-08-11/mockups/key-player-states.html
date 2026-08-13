@@ -1,0 +1,135 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Key screen: Player states (all five)</title>
+<style>
+/* ── KEY SCREEN: PLAYER STATES ───────────────────────────────────────
+   Governed by:
+     EXPERIENCE.md > Information Architecture > Player state table (5 states)
+     EXPERIENCE.md > Foundation — fixed 16:9, no input, no cursor, no chrome
+     EXPERIENCE.md > State Patterns > "Player states never fail visibly"
+     DESIGN.md > Components > holding-card-owner / holding-card-customer /
+                 trial-badge / "Player item transition"
+   Two registers, per the player-identity decision:
+     OWNER register    — white ground, branded, instructional. Audience is the
+                         owner standing in front of the TV.
+     CUSTOMER register — #0A0A0A ground, unbranded 32x32 mark, NO TEXT AT ALL.
+                         Audience is the venue's customers (FR-63b).
+
+   Chromium 76 fidelity notes, deliberately observed in this mock:
+     · 16:9 uses the padding-block-end:56.25% ratio box, NOT aspect-ratio
+       (aspect-ratio shipped Chrome 88).
+     · The trial badge is placed by GRID ALIGNMENT (justify-items/align-items,
+       direction-aware since Chrome 57), NOT by inset-inline-end
+       (inset-inline-* shipped Chrome 87). This is how FR-81's mirroring is
+       achieved while keeping FR-47 literally intact — see DESIGN.md >
+       Layout & Spacing.
+     · No flexbox gap anywhere in the player (gap shipped Chrome 84).
+     · On-device type is sized in vmin; this mock approximates with px because
+       the frames are scaled down. Intended: code 5.2vmin, label 1.1vmin.
+   Tokens: background #FFFFFF · foreground #000000 · muted-foreground #666666
+           background-dark #0A0A0A · muted-foreground-dark #999999
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E4E4E4;color:#000;font:500 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:36px 20px;-webkit-font-smoothing:antialiased}
+.page{max-width:1140px;margin:0 auto}
+.note{background:#000;color:#fff;padding:20px 24px;margin-bottom:26px;font-size:14px;line-height:1.6;max-width:80ch}
+.note b{font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;column-gap:24px;row-gap:30px}
+.one{grid-column:1/-1}
+.cap{font:800 10px/1.5 -apple-system,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#666;margin-bottom:8px}
+.cap em{font-style:normal;color:#000}
+.reg{display:inline-block;border:1px solid #000;padding:3px 6px;margin-inline-end:8px;font-size:9px;letter-spacing:.14em}
+.reg.cust{background:#000;color:#fff}
+.why{font-size:12.5px;color:#555;margin-top:9px;line-height:1.5;max-width:62ch}
+
+/* 16:9 ratio box — padding technique, Chromium 76 safe */
+.tv{position:relative;width:100%;padding-block-end:56.25%;overflow:hidden;border:1px solid #000}
+.tv > .in{position:absolute;top:0;left:0;width:100%;height:100%;display:grid;grid-template-rows:1fr auto}
+/* badge row uses alignment, not insets — mirrors with direction for free */
+.badgerow{display:grid;justify-items:end;align-items:end;padding:4%}
+.badge{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.3}
+.stage{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6% 8% 0}
+
+/* owner register */
+.own{background:#fff}
+.own .k{font:800 10px/1 -apple-system,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#666}
+.own .code{font:800 52px/1 -apple-system,sans-serif;letter-spacing:.16em;margin:14px 0 12px;font-variant-numeric:tabular-nums}
+.own .h{font:800 26px/1.1 -apple-system,sans-serif;letter-spacing:-.03em;margin-bottom:10px}
+.own .p{font-size:14px;color:#666;max-width:40ch;line-height:1.5}
+.own .badge{color:#000}
+
+/* customer register — no text, ever */
+.cust{background:#0A0A0A}
+.cust .mark{width:32px;height:32px;border:1px solid #2A2A2A}
+.cust .badge{color:#fff}
+
+/* playing */
+.play{background:#111}
+.play .menu{position:absolute;top:0;left:0;width:100%;height:100%;background:#0E1A14;display:flex;align-items:center;justify-content:center}
+.play .menu span{font:800 30px/1.2 -apple-system,sans-serif;color:#F2EFE6;letter-spacing:-.02em;text-align:center}
+.play .menu small{display:block;font:500 14px/1.6 -apple-system,sans-serif;color:#9BAF9F;letter-spacing:.14em;text-transform:uppercase;margin-top:12px}
+.fade{position:absolute;inset:0;border:1px dashed #666;margin:8%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font:800 9px/1 -apple-system,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9BAF9F}
+</style>
+
+<div class="page">
+  <div class="note">
+    <b>Two registers, decided by who is standing in front of the TV.</b> Owner-facing states are branded and tell him what to do. Customer-facing states are anonymous and say nothing at all — a café's customers must never learn from the wall that the owner's card was declined (FR-63b).
+    <br><br><b>The badge is placed by alignment, not by insets.</b> <code>inset-inline-end</code> shipped in Chrome 87 and the player floor is Chromium 76, so the FR-81 corner mirror is achieved with a grid cell using <code>justify-items: end</code> — direction-aware since Chrome 57. FR-47's "no physical left/right" holds literally, with no <code>[dir]</code> exemption.
+  </div>
+
+  <div class="grid">
+
+    <div>
+      <div class="cap"><span class="reg">Owner</span><em>1 · Pairing</em> — unpaired, or code expired and regenerated</div>
+      <div class="tv"><div class="in own">
+        <div class="stage">
+          <div class="k">Pairing code</div>
+          <div class="code">7K2QF9</div>
+          <div class="p">Enter this code in Lawha, under Screens.</div>
+        </div>
+        <div class="badgerow"><span class="badge">Lawha</span></div>
+      </div></div>
+      <p class="why">FR-15. The code is the largest thing on the screen because it is read from across a room. Intended on-device size 5.2vmin — legible at four metres on a 1080p panel.</p>
+    </div>
+
+    <div>
+      <div class="cap"><span class="reg">Owner</span><em>2 · Nothing to play</em> — paired, no playlist assigned</div>
+      <div class="tv"><div class="in own">
+        <div class="stage">
+          <div class="h">This screen has no content yet</div>
+          <div class="p">Assign a playlist to <b>Front Counter</b> in Lawha and it will appear here on its own.</div>
+        </div>
+        <div class="badgerow"><span class="badge">Lawha</span></div>
+      </div></div>
+      <p class="why">FR-12. Names the screen, states the next action, and promises it needs no further trip to the TV (FR-37). Never a browser error, blank screen, or stack trace.</p>
+    </div>
+
+    <div class="one">
+      <div class="cap"><em>3 · Playing</em> — manifest present, window active. Cross-fade is the one motion exception in the product.</div>
+      <div class="tv"><div class="in play">
+        <div class="menu"><span>Flat White · 14<small>Lunch until 14:00</small></span></div>
+        <div class="fade">~200ms opacity cross-fade → hard cut on video-to-video and under memory pressure</div>
+        <div class="badgerow"><span class="badge" style="color:#fff">Lawha</span></div>
+      </div></div>
+      <p class="why">The venue's own media, full-bleed. Lawha contributes exactly one element: the trial badge, at ≤2% of screen area, inside the outer 10% margin, at 0.3 opacity, never animated (FR-79–FR-82). On any paid plan it is gone within one heartbeat cycle (FR-82) and the wall carries no vendor branding of any kind.</p>
+    </div>
+
+    <div>
+      <div class="cap"><span class="reg cust">Customer</span><em>4 · Between windows</em> — schedule gap, no fallback</div>
+      <div class="tv"><div class="in cust">
+        <div class="stage"><div class="mark"></div></div>
+        <div class="badgerow"><span class="badge">Lawha</span></div>
+      </div></div>
+      <p class="why">Group E — a screen with no active window and no fallback shows the holding card rather than nothing. The venue's customers are looking at this, so it says nothing. The <em>console</em> is where this gets explained, in amber, before it happens.</p>
+    </div>
+
+    <div>
+      <div class="cap"><span class="reg cust">Customer</span><em>5 · Subscription stopped</em> — termination confirmed</div>
+      <div class="tv"><div class="in cust">
+        <div class="stage"><div class="mark"></div></div>
+      </div></div>
+      <p class="why">FR-63b. Identical to state 4 by design, and deliberately so: no payment state, no pricing, no account detail on a public wall. Note the badge is absent — a stopped screen is not a trial screen. Restoring payment restores playback with no re-pairing (FR-63c).</p>
+    </div>
+
+  </div>
+</div>

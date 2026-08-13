@@ -1,0 +1,200 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lawha — Direction C: Room</title>
+<style>
+/* ── DIRECTION C: "ROOM" ─────────────────────────────────────────────
+   Palette (documented for DESIGN.md extraction):
+     ground     #F5F1EA   warm paper ground
+     card       #FFFFFF   panels sit on the ground with real separation
+     ink        #2A2723   primary text (warm near-black, never pure #000)
+     muted      #7C7468   metadata
+     border     #E6DFD3   soft warm hairline
+     ok         #4F6B52   sage — used sparingly, as a word not a light
+     warn       #9A6B33   ochre
+     alarm      #B4543A   terracotta, not emergency red
+   Radius: 14px cards, 10px controls. Elevation: 0 1px 2px rgba(42,39,35,.05)
+   plus 0 8px 24px rgba(42,39,35,.04) — soft, low, never dramatic.
+   Intended type: a humanist sans (Söhne / Aeonik / Figtree) at 15–16px.
+   Arabic: Rubik Arabic or Tajawal — round, warm, high x-height.
+   Motion implication: gentle — 240ms ease-in-out, small vertical settles.
+─────────────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E9E3D9;color:#2A2723;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:40px 24px;-webkit-font-smoothing:antialiased}
+.page{max-width:1080px;margin:0 auto}
+.rationale{background:#2A2723;color:#F5F1EA;padding:28px 32px;border-radius:16px;margin-bottom:30px}
+.rationale h1{font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;margin-bottom:12px;color:#A79C8C}
+.rationale p{max-width:66ch;font-size:15px;line-height:1.62}
+.rationale p+p{margin-top:10px}
+.caption{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8A8072;margin:32px 0 10px}
+
+.frame{background:#F5F1EA;border:1px solid #E6DFD3;border-radius:16px;overflow:hidden}
+.chrome{padding:10px 14px;display:flex;align-items:center;gap:7px;background:#EFEAE1}
+.dot{width:9px;height:9px;border-radius:50%;background:#DCD4C6}
+.url{margin-inline-start:11px;font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#9A9081}
+
+.app{display:grid;grid-template-columns:196px 1fr;min-height:520px}
+.nav{padding:22px 12px}
+.brand{font-size:18px;font-weight:600;letter-spacing:-.015em;padding:0 12px 20px}
+.nav a{display:block;padding:9px 12px;color:#6E665A;text-decoration:none;border-radius:10px;margin-bottom:2px;font-size:14.5px}
+.nav a.on{background:#FFF;color:#2A2723;font-weight:600;box-shadow:0 1px 2px rgba(42,39,35,.05)}
+.meter{margin:20px 12px 0;background:#FFF;border-radius:12px;padding:13px;font-size:12px;color:#7C7468;box-shadow:0 1px 2px rgba(42,39,35,.05)}
+.bar{height:6px;background:#EFEAE1;border-radius:3px;margin:8px 0 6px}
+.bar i{display:block;height:6px;border-radius:3px;background:#4F6B52;width:34%}
+
+.main{padding:26px 30px 34px}
+.h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.h h2{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.lede{color:#7C7468;font-size:14.5px;margin-bottom:24px}
+.btn{background:#2A2723;color:#F5F1EA;border:0;border-radius:10px;padding:10px 17px;font-size:14px;font-weight:500;cursor:pointer}
+.btn.ghost{background:#FFF;color:#2A2723;border:1px solid #E6DFD3}
+
+.branch{display:flex;align-items:baseline;gap:10px;margin:26px 0 11px}
+.branch:first-of-type{margin-top:0}
+.branch h3{font-size:15px;font-weight:600}
+.branch span{font-size:13px;color:#8A8072}
+.cards{display:grid;gap:11px}
+.card{background:#FFF;border-radius:14px;padding:17px 19px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;box-shadow:0 1px 2px rgba(42,39,35,.05),0 8px 24px rgba(42,39,35,.035)}
+.nm{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.pl{font-size:13.5px;color:#7C7468;margin-top:3px}
+.state{font-size:13px;color:#4F6B52;font-weight:500;white-space:nowrap}
+/* escalation: card changes ground, gains a sentence and an action. */
+.card.alarm{background:#FBF0EC;box-shadow:0 1px 2px rgba(180,84,58,.1),0 8px 24px rgba(180,84,58,.07)}
+.card.alarm .nm{color:#8E3F2B}
+.card.alarm .state{color:#B4543A}
+.say{grid-column:1/-1;font-size:13.5px;color:#8E3F2B;line-height:1.5}
+.card.note{background:#FBF6EC}
+.card.note .state{color:#9A6B33}
+.card.note .say{color:#7A5527}
+.act{display:flex;gap:8px;grid-column:1/-1;margin-top:4px}
+.act button{background:#FFF;border:1px solid #E8D5CC;border-radius:9px;padding:7px 13px;font-size:13px;color:#8E3F2B;cursor:pointer;font-weight:500}
+
+.rtl{direction:rtl}
+.ar{font-family:"Geeza Pro","Noto Naskh Arabic",-apple-system,sans-serif}
+.num{direction:ltr;unicode-bidi:isolate;display:inline-block}
+
+.empty{padding:76px 30px;text-align:center}
+.empty .ic{width:56px;height:56px;border-radius:16px;background:#EFEAE1;margin:0 auto 20px}
+.empty h3{font-size:22px;font-weight:600;letter-spacing:-.018em;margin-bottom:9px}
+.empty p{color:#7C7468;max-width:46ch;margin:0 auto 22px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tv{aspect-ratio:16/9;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7%;border-radius:14px}
+.tv.owner{background:#F5F1EA;border:1px solid #E6DFD3}
+.code{font:600 48px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.13em;margin:14px 0 12px;color:#2A2723}
+.pill{background:#FFF;border-radius:999px;padding:5px 13px;font-size:12px;color:#7C7468}
+.hint{font-size:13.5px;color:#7C7468;max-width:36ch}
+.tv.cust{background:#22201D;border:1px solid #22201D}
+.tv.cust .mark{width:32px;height:32px;border-radius:11px;background:#332F2A}
+.badge{position:absolute;inset-block-end:4%;inset-inline-end:4%;font-size:10px;font-weight:600;color:#2A2723;opacity:.3}
+.tvlabel{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#8A8072;margin-bottom:8px;font-weight:600}
+</style>
+
+<div class="page">
+  <div class="rationale">
+    <h1>Direction C — “Room”</h1>
+    <p>Minimal but <em>warm</em>. A paper ground with white cards floating on it, soft radii, sage instead of green, terracotta instead of emergency red. Ink is a warm near-black, never pure <code>#000</code>.</p>
+    <p>Escalation happens by the card changing its ground colour and growing — it gains a plain sentence and a button, so the owner is never told there's a problem without being told what to do (NFR-9).</p>
+    <p>Lowest technical register of the four. Fits a non-technical café owner and reads well on a phone; risks looking soft to a customer managing forty screens, and the warm palette narrows your accent options later.</p>
+  </div>
+
+  <div class="caption">Hero — Screens, English</div>
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">Lawha</div>
+        <a href="#" class="on">Screens</a>
+        <a href="#">Media</a>
+        <a href="#">Playlists</a>
+        <a href="#">Schedules</a>
+        <a href="#">Branches</a>
+        <a href="#">Billing</a>
+        <div class="meter">Storage<div class="bar"><i></i></div>1.7 of 5 GB used</div>
+      </nav>
+      <div class="main">
+        <div class="h"><h2>Screens</h2><button class="btn">Add a screen</button></div>
+        <div class="lede">Four of your five screens are showing what you asked them to.</div>
+
+        <div class="branch"><h3>Main branch</h3><span>3 screens</span></div>
+        <div class="cards">
+          <div class="card"><div><div class="nm">Front Counter</div><div class="pl">Lunch Menu</div></div><div class="state">Playing</div></div>
+          <div class="card"><div><div class="nm">Window Display</div><div class="pl">Weekend Offers</div></div><div class="state">Playing</div></div>
+          <div class="card alarm">
+            <div><div class="nm">Back Wall</div><div class="pl">Lunch Menu — last confirmed at 09:14</div></div>
+            <div class="state">Offline</div>
+            <div class="say">We stopped hearing from this screen at 09:14 this morning, so we can't tell you what's on the wall right now.</div>
+            <div class="act"><button>What to check</button><button>Screen details</button></div>
+          </div>
+        </div>
+
+        <div class="branch"><h3>Al Hamra branch</h3><span>2 screens</span></div>
+        <div class="cards">
+          <div class="card"><div><div class="nm">Entrance</div><div class="pl">Weekend Offers</div></div><div class="state">Playing</div></div>
+          <div class="card note">
+            <div><div class="nm">Drive-Thru Menu</div><div class="pl">Lunch Menu</div></div>
+            <div class="state">Playing</div>
+            <div class="say">This is a smart TV, so Lawha can't restart it after a power cut. If the power goes, someone will need to turn it back on.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Same screen, Arabic — RTL mirror; numerals isolated LTR</div>
+  <div class="frame rtl ar">
+    <div class="chrome" dir="ltr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">lawha.app/ar/screens</span></div>
+    <div class="app">
+      <nav class="nav">
+        <div class="brand">لوحة</div>
+        <a href="#" class="on">الشاشات</a>
+        <a href="#">الوسائط</a>
+        <a href="#">قوائم التشغيل</a>
+        <a href="#">المواعيد</a>
+        <a href="#">الفروع</a>
+        <a href="#">الفواتير</a>
+        <div class="meter">مساحة التخزين<div class="bar"><i></i></div>مُستخدَم <span class="num">1.7 / 5 GB</span></div>
+      </nav>
+      <div class="main">
+        <div class="h"><h2>الشاشات</h2><button class="btn">إضافة شاشة</button></div>
+        <div class="lede">أربع من شاشاتك الخمس تعرض ما طلبتَه منها.</div>
+        <div class="branch"><h3>الفرع الرئيسي</h3><span><span class="num">3</span> شاشات</span></div>
+        <div class="cards">
+          <div class="card"><div><div class="nm">شاشة الكاشير</div><div class="pl">قائمة الغداء</div></div><div class="state">تعرض الآن</div></div>
+          <div class="card alarm">
+            <div><div class="nm">شاشة الحائط الخلفي</div><div class="pl">قائمة الغداء — آخر تأكيد الساعة <span class="num">9:14</span></div></div>
+            <div class="state">غير متصلة</div>
+            <div class="say">انقطع اتصالنا بهذه الشاشة الساعة <span class="num">9:14</span> صباح اليوم، ولا يمكننا تأكيد ما يظهر عليها الآن.</div>
+            <div class="act"><button>ما الذي يجب فحصه</button><button>تفاصيل الشاشة</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">Empty state</div>
+  <div class="frame">
+    <div class="empty">
+      <div class="ic"></div>
+      <h3>Let's get your first screen up</h3>
+      <p>Open Lawha on your TV. It will show a six-character code — type it here and the screen is yours.</p>
+      <button class="btn">Enter a pairing code</button>
+    </div>
+  </div>
+
+  <div class="caption">Player, two registers</div>
+  <div class="grid2">
+    <div>
+      <div class="tvlabel">Owner register — pairing</div>
+      <div class="tv owner">
+        <div class="pill">Ready to pair</div>
+        <div class="code">7K2QF9</div>
+        <div class="hint">Type this code into Lawha, under Screens.</div>
+        <div class="badge">Lawha</div>
+      </div>
+    </div>
+    <div>
+      <div class="tvlabel">Customer register — stopped (FR-63b)</div>
+      <div class="tv cust"><div class="mark"></div></div>
+    </div>
+  </div>
+</div>
